@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { watermarkTemplates, users } from './data';
+import { watermarkTemplates, users, projects } from './data';
 
 // 水印模板管理处理程序
 export const watermarkHandlers = [
@@ -276,6 +276,57 @@ export const watermarkHandlers = [
         taskId: `task-${Date.now()}`
       }
     });
+  })
+  ,
+  // 废弃：原水印模块模型接口，改从系统模型库获取
+  http.get('/api/watermark/models', () => {
+    return HttpResponse.json({ code: 200, message: '请改用 /system/model/list', data: [] });
+  }),
+  // 新增：按项目生成嵌入视频
+  http.post('/api/watermark/embed', async ({ request }) => {
+    const data = await request.json();
+    const { projectId, model, watermarkText } = data || {};
+    const project = projects.find(p => p.id === projectId);
+    if (!project) {
+      return HttpResponse.json({ code: 404, message: '项目不存在', data: null }, { status: 404 });
+    }
+    if (!project.originalVideo) {
+      return HttpResponse.json({ code: 400, message: '请先上传原视频', data: null }, { status: 400 });
+    }
+    // 生成嵌入视频
+    project.embeddedVideo = {
+      id: `embed-${Date.now()}`,
+      filename: project.originalVideo.filename.replace(/(\.[^.]*)?$/, '-embedded.mp4'),
+      size: Math.floor((project.originalVideo.size || 100000000) * 1.1),
+      createTime: new Date().toISOString(),
+      url: '/sample-embedded.mp4',
+      coverUrl: project.originalVideo.coverUrl,
+      model: model || 'wm-auto',
+      watermarkText: watermarkText || ''
+    };
+    return HttpResponse.json({ code: 200, message: '生成嵌入视频成功', data: project.embeddedVideo });
+  }),
+  // 新增：执行提取
+  http.post('/api/watermark/extract', async ({ request }) => {
+    const data = await request.json();
+    const { projectId, videoId } = data || {};
+    const project = projects.find(p => p.id === projectId);
+    if (!project) {
+      return HttpResponse.json({ code: 404, message: '项目不存在', data: null }, { status: 404 });
+    }
+    const item = project.toExtractVideos.find(v => v.id === videoId);
+    if (!item) {
+      return HttpResponse.json({ code: 404, message: '待检验视频不存在', data: null }, { status: 404 });
+    }
+    // 模拟提取
+    item.status = 'processing';
+    item.progress = 50;
+    // 简单延迟模拟，此处直接返回完成
+    item.status = 'completed';
+    item.progress = 100;
+    item.model = project.embeddedVideo?.model || 'wm-auto';
+    item.watermarkInfo = project.embeddedVideo?.watermarkText || 'WM-INFO-FAKE';
+    return HttpResponse.json({ code: 200, message: '提取成功', data: item });
   })
 ];
 

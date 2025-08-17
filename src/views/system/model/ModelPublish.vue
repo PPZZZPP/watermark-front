@@ -116,6 +116,7 @@
           :data-source="publishedModels"
           :pagination="{ pageSize: 5 }"
           size="small"
+          :loading="loadingPublished"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'status'">
@@ -167,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import { 
   CloudUploadOutlined
@@ -245,36 +246,27 @@ const publishedColumns = [
   },
 ];
 
-// 已发布模型列表
-const publishedModels = ref([
-  {
-    id: 1,
-    name: 'WatermarkModel_Standard',
-    version: '1.0.0',
-    publishTime: '2023-05-15 10:30:00',
-    scenarios: ['电影', '电视节目'],
-    status: 'active',
-    isDefault: true,
-  },
-  {
-    id: 2,
-    name: 'WatermarkModel_Advanced',
-    version: '1.2.0',
-    publishTime: '2023-06-20 14:45:00',
-    scenarios: ['电影', '电视节目', '直播'],
-    status: 'active',
-    isDefault: false,
-  },
-  {
-    id: 3,
-    name: 'WatermarkModel_Lite',
-    version: '0.9.0',
-    publishTime: '2023-04-10 09:15:00',
-    scenarios: ['教育视频'],
-    status: 'inactive',
-    isDefault: false,
-  },
-]);
+// 已发布模型列表（接口获取）
+const publishedModels = ref([]);
+const loadingPublished = ref(false);
+
+const loadPublishedModels = async () => {
+  loadingPublished.value = true;
+  try {
+    const res = await systemStore.getModelListAction({ page: 1, pageSize: 100, status: 'published' });
+    publishedModels.value = res?.data?.list || systemStore.modelList || [];
+  } catch (e) {
+    try {
+      const resp = await fetch('/system/model/list?_t=' + Date.now() + '&page=1&pageSize=100&status=published');
+      const json = await resp.json();
+      if (json && json.code === 200) {
+        publishedModels.value = json.data?.list || [];
+      }
+    } catch {}
+  } finally {
+    loadingPublished.value = false;
+  }
+};
 
 // 计算是否可以发布
 const canPublish = computed(() => {
@@ -449,6 +441,10 @@ const deleteModel = (record) => {
   
   message.success(`已删除模型: ${record.name}`);
 };
+
+onMounted(() => {
+  loadPublishedModels();
+});
 </script>
 
 <style lang="less" scoped>

@@ -71,38 +71,79 @@ export const projectHandlers = [
   // 项目管理 - 创建项目
   http.post('/api/project/create', async ({ request }) => {
     const data = await request.json();
-    const { name, description } = data;
+    const { name, description, originalVideo } = data;
     
     // 验证必填字段
     if (!name) {
-      return HttpResponse.json({
-        code: 400,
-        message: '项目名称不能为空',
-        data: null
-      }, { status: 400 });
+      return HttpResponse.json({ code: 400, message: '项目名称不能为空', data: null }, { status: 400 });
+    }
+    if (!originalVideo || !originalVideo.filename) {
+      return HttpResponse.json({ code: 400, message: '必须上传原视频', data: null }, { status: 400 });
     }
     
-    // 在实际应用中，这里应该从token中解析用户ID
-    // 这里简化处理，假设已登录用户是ID为1的用户
     const newProject = {
       id: `project-${projects.length + 1}`,
       name,
       description: description || '',
       status: 'pending',
       progress: 0,
-      videoCount: 0,
+      videoCount: 1,
       createTime: new Date().toISOString(),
       coverUrl: `/placeholder-video-${Math.floor(Math.random() * 5) + 1}.png`,
-      userId: 1
+      userId: 1,
+      originalVideo: {
+        id: `orig-${Date.now()}`,
+        filename: originalVideo.filename,
+        size: originalVideo.size || Math.floor(Math.random() * 100000000),
+        uploadTime: new Date().toISOString(),
+        url: '/sample-original.mp4',
+        coverUrl: `/placeholder-video-${Math.floor(Math.random() * 5) + 1}.png`
+      },
+      embeddedVideo: null,
+      toExtractVideos: []
     };
     
     projects.push(newProject);
     
-    return HttpResponse.json({
-      code: 200,
-      message: '创建项目成功',
-      data: newProject
-    });
+    return HttpResponse.json({ code: 200, message: '创建项目成功', data: newProject });
+  }),
+
+  // 项目 - 上传待检验视频
+  http.post('/api/project/:id/to-extract', async ({ request, params }) => {
+    const { id } = params;
+    const data = await request.json();
+    const { filename, size, model, note } = data || {};
+    const project = projects.find(p => p.id === id);
+    if (!project) {
+      return HttpResponse.json({ code: 404, message: '项目不存在', data: null }, { status: 404 });
+    }
+    if (!filename) {
+      return HttpResponse.json({ code: 400, message: '文件名不能为空', data: null }, { status: 400 });
+    }
+    const item = {
+      id: `toextract-${Date.now()}`,
+      filename,
+      size: size || Math.floor(Math.random() * 100000000),
+      uploadTime: new Date().toISOString(),
+      status: 'pending',
+      progress: 0,
+      watermarkInfo: '',
+      model: model || 'Auto',
+      note: note || ''
+    };
+    project.toExtractVideos.push(item);
+    return HttpResponse.json({ code: 200, message: '待检验视频已上传', data: item });
+  }),
+
+  // 项目 - 删除待检验视频
+  http.delete('/api/project/:id/to-extract/:vid', ({ params }) => {
+    const { id, vid } = params;
+    const project = projects.find(p => p.id === id);
+    if (!project) {
+      return HttpResponse.json({ code: 404, message: '项目不存在', data: null }, { status: 404 });
+    }
+    project.toExtractVideos = project.toExtractVideos.filter(v => v.id !== vid);
+    return HttpResponse.json({ code: 200, message: '删除成功', data: null });
   }),
   
   // 项目管理 - 更新项目

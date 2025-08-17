@@ -78,3 +78,20 @@ export function downloadProjectFile(id, fileId) {
     responseType: 'blob'
   });
 } 
+
+// 上传待检验视频
+export function uploadToExtract(id, data) {
+  return request({
+    url: `/api/project/${id}/to-extract`,
+    method: 'post',
+    data
+  });
+}
+
+// 删除待检验视频
+export function deleteToExtract(id, vid) {
+  return request({
+    url: `/api/project/${id}/to-extract/${vid}`,
+    method: 'delete'
+  });
+}

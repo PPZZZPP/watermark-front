@@ -1,7 +1,7 @@
 <template>
-  <div class="project-detail">
-    <a-card class="detail-card" :bordered="false" :loading="loading">
-      <template #title>
+  <div class="project-detail-container">
+    <div class="pd-section">
+      <a-spin :spinning="loading">
         <div class="detail-header">
           <div class="detail-title">
             <a-button class="back-button" @click="goBack">
@@ -21,89 +21,159 @@
             </a-button>
           </div>
         </div>
-      </template>
-      
-      <!-- 项目信息 -->
-      <div class="project-info" v-if="currentProject">
-        <a-descriptions title="基本信息" bordered>
-          <a-descriptions-item label="项目名称">{{ currentProject.name }}</a-descriptions-item>
-          <a-descriptions-item label="创建时间">{{ formatDate(currentProject.createTime) }}</a-descriptions-item>
-          <a-descriptions-item label="状态">
-            <a-tag :color="getStatusColor(currentProject.status)">{{ getStatusText(currentProject.status) }}</a-tag>
-          </a-descriptions-item>
-          <a-descriptions-item label="视频数量">{{ currentProject.videoCount || 0 }}</a-descriptions-item>
-          <a-descriptions-item label="项目描述" :span="2">{{ currentProject.description || '暂无描述' }}</a-descriptions-item>
-        </a-descriptions>
-        
-        <!-- 处理进度 -->
-        <div class="progress-container" v-if="currentProject.status === 'processing'">
-          <h3>处理进度</h3>
-          <div class="progress-info">
-            <div class="progress-text">
-              <span>总进度</span>
-              <span>{{ currentProject.progress || 0 }}%</span>
+
+        <!-- 项目信息 -->
+        <div class="project-info" v-if="currentProject">
+          <a-descriptions title="基本信息" bordered size="middle" :column="3">
+            <a-descriptions-item label="项目名称">{{ currentProject.name }}</a-descriptions-item>
+            <a-descriptions-item label="创建时间">{{ formatDate(currentProject.createTime) }}</a-descriptions-item>
+            <a-descriptions-item label="状态">
+              <a-tag :color="getStatusColor(currentProject.status)">{{ getStatusText(currentProject.status) }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="视频数量">{{ currentProject.videoCount || 0 }}</a-descriptions-item>
+            <a-descriptions-item label="项目描述" :span="2">{{ currentProject.description || '暂无描述' }}</a-descriptions-item>
+          </a-descriptions>
+
+          <div class="video-sections">
+            <!-- 原视频 -->
+            <a-card title="原视频" size="small" class="video-card">
+              <template v-if="currentProject.originalVideo">
+                <div class="video-body">
+                  <div class="video-thumb">
+                    <img :src="currentProject.originalVideo.coverUrl" alt="原视频封面" />
+                  </div>
+                  <div class="video-meta">
+                    <div class="meta-title" :title="currentProject.originalVideo.filename">{{ currentProject.originalVideo.filename }}</div>
+                    <div class="meta-items">
+                      <span class="meta-item">大小：{{ formatFileSize(currentProject.originalVideo.size) }}</span>
+                      <span class="meta-item">上传时间：{{ formatDate(currentProject.originalVideo.uploadTime) }}</span>
+                    </div>
+                    <div class="video-actions">
+                      <a-space>
+                        <a-button size="small" @click="downloadOriginal">下载原视频</a-button>
+                      </a-space>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <a-empty description="未上传原视频" />
+              </template>
+            </a-card>
+
+            <!-- 嵌入视频 -->
+            <a-card title="嵌入视频" size="small" class="video-card">
+              <template v-if="currentProject.embeddedVideo">
+                <div class="video-body">
+                  <div class="video-thumb">
+                    <img :src="currentProject.embeddedVideo.coverUrl" alt="嵌入视频封面" />
+                  </div>
+                  <div class="video-meta">
+                    <div class="meta-title" :title="currentProject.embeddedVideo.filename">{{ currentProject.embeddedVideo.filename }}</div>
+                    <a-space wrap class="meta-tags">
+                      <a-tag color="geekblue">模型：{{ currentProject.embeddedVideo.model }}</a-tag>
+                      <a-tag v-if="currentProject.embeddedVideo.watermarkText" color="green">水印：{{ currentProject.embeddedVideo.watermarkText }}</a-tag>
+                    </a-space>
+                    <div class="video-actions">
+                      <a-space>
+                        <a-button type="primary" size="small" @click="downloadEmbedded">下载嵌入视频</a-button>
+                      </a-space>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <a-result status="info" title="尚未生成嵌入视频" sub-title="请前往水印嵌入页面生成">
+                  <template #extra>
+                    <a-button type="primary" @click="goEmbed">前往水印嵌入</a-button>
+                  </template>
+                </a-result>
+              </template>
+            </a-card>
+          </div>
+
+          <!-- 处理进度 -->
+          <div class="progress-container" v-if="currentProject.status === 'processing'">
+            <h3>处理进度</h3>
+            <div class="progress-info">
+              <div class="progress-text">
+                <span>总进度</span>
+                <span>{{ currentProject.progress || 0 }}%</span>
+              </div>
+              <a-progress :percent="currentProject.progress || 0" status="active" />
             </div>
-            <a-progress :percent="currentProject.progress || 0" status="active" />
           </div>
         </div>
-      </div>
-      
-      <!-- 视频列表 -->
-      <div class="video-list">
-        <div class="section-header">
-          <h3>视频列表</h3>
-          <a-button type="primary" @click="handleAddVideo">
-            <template #icon><plus-outlined /></template>
-            添加视频
-          </a-button>
+
+        <!-- 视频列表 -->
+        <div class="video-list">
+          <div class="section-header">
+            <h3>待提取视频</h3>
+            <a-space>
+              <a-button type="primary" @click="goExtract">
+                <template #icon><plus-outlined /></template>
+                新建提取
+              </a-button>
+            </a-space>
+          </div>
+
+          <a-table
+            :columns="columns"
+            :data-source="currentProject?.toExtractVideos || []"
+            :pagination="tablePagination"
+            :loading="videoLoading"
+            @change="handleTableChange"
+            row-key="id"
+          >
+            <!-- 视频预览 -->
+            <template #bodyCell="{ column, record }">
+              <!-- 状态 -->
+              <template v-if="column.key === 'status'">
+                <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+              </template>
+
+              <!-- 进度 -->
+              <template v-if="column.key === 'progress'">
+                <div v-if="record.status === 'processing'">
+                  <a-progress :percent="record.progress || 0" size="small" />
+                </div>
+                <span v-else>-</span>
+              </template>
+
+              <!-- 水印信息 -->
+              <template v-if="column.key === 'watermarkInfo'">
+                <a-typography-text code v-if="record.watermarkInfo">{{ record.watermarkInfo }}</a-typography-text>
+                <span v-else>-</span>
+              </template>
+
+              <!-- 模型 -->
+              <template v-if="column.key === 'model'">
+                <span>{{ record.model || '-' }}</span>
+              </template>
+
+              <!-- 说明 -->
+              <template v-if="column.key === 'note'">
+                <span>{{ record.note || '-' }}</span>
+              </template>
+
+              <!-- 操作 -->
+              <template v-if="column.key === 'action'">
+                <a-space>
+                  <a-button type="link" size="small" @click="handleDownloadVideo(record)">下载</a-button>
+                  <a-button type="link" size="small">检测报告导出</a-button>
+                  <a-button type="link" size="small" danger @click="handleDeleteToExtract(record)">删除</a-button>
+                </a-space>
+              </template>
+            </template>
+
+            <!-- 空状态 -->
+            <template #emptyText>
+            <a-empty description="暂无待提取视频" />
+            </template>
+          </a-table>
         </div>
-        
-        <a-table
-          :columns="columns"
-          :data-source="videos"
-          :pagination="tablePagination"
-          :loading="videoLoading"
-          @change="handleTableChange"
-          row-key="id"
-        >
-          <!-- 视频预览 -->
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'preview'">
-              <div class="video-preview">
-                <img :src="record.coverUrl || '/placeholder-video.png'" alt="视频封面" />
-              </div>
-            </template>
-            
-            <!-- 状态 -->
-            <template v-if="column.key === 'status'">
-              <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
-            </template>
-            
-            <!-- 进度 -->
-            <template v-if="column.key === 'progress'">
-              <div v-if="record.status === 'processing'">
-                <a-progress :percent="record.progress || 0" size="small" />
-              </div>
-              <span v-else>-</span>
-            </template>
-            
-            <!-- 操作 -->
-            <template v-if="column.key === 'action'">
-              <a-space>
-                <a-button type="link" size="small" @click="handlePreviewVideo(record)">预览</a-button>
-                <a-button type="link" size="small" @click="handleDownloadVideo(record)">下载</a-button>
-                <a-button type="link" size="small" danger @click="handleDeleteVideo(record)">删除</a-button>
-              </a-space>
-            </template>
-          </template>
-          
-          <!-- 空状态 -->
-          <template #emptyText>
-            <a-empty description="暂无视频" />
-          </template>
-        </a-table>
-      </div>
-    </a-card>
+      </a-spin>
+    </div>
     
     <!-- 添加视频对话框 -->
     <a-modal
@@ -190,8 +260,7 @@ const projectId = computed(() => route.params.id);
 // 当前项目
 const currentProject = computed(() => projectStore.getCurrentProject);
 
-// 视频列表
-const videos = ref([]);
+// 待提取列表不单独维护，直接来自 currentProject.toExtractVideos
 
 // 表格分页
 const tablePagination = reactive({
@@ -204,11 +273,6 @@ const tablePagination = reactive({
 
 // 表格列定义
 const columns = [
-  {
-    title: '预览',
-    key: 'preview',
-    width: 120,
-  },
   {
     title: '文件名',
     dataIndex: 'filename',
@@ -240,9 +304,24 @@ const columns = [
     width: 150,
   },
   {
+    title: '水印信息',
+    key: 'watermarkInfo',
+    width: 200,
+  },
+  {
+    title: '模型',
+    key: 'model',
+    width: 120,
+  },
+  {
+    title: '说明',
+    key: 'note',
+    width: 200,
+  },
+  {
     title: '操作',
     key: 'action',
-    width: 180,
+    width: 220,
     fixed: 'right',
   },
 ];
@@ -321,38 +400,35 @@ const goBack = () => {
 const handleTableChange = (pagination, filters, sorter) => {
   tablePagination.current = pagination.current;
   tablePagination.pageSize = pagination.pageSize;
-  
-  // 加载对应页的数据
-  loadVideos();
 };
 
-// 加载视频列表
-const loadVideos = async () => {
-  if (!projectId.value) return;
-  
+// 删除待提取视频
+const handleDeleteToExtract = async (record) => {
   try {
-    videoLoading.value = true;
-    
-    // 这里应该调用API获取视频列表
-    // 模拟数据
-    setTimeout(() => {
-      videos.value = Array(10).fill(0).map((_, index) => ({
-        id: `video-${index}`,
-        filename: `视频文件${index + 1}.mp4`,
-        size: Math.floor(Math.random() * 100000000),
-        uploadTime: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-        status: ['pending', 'processing', 'completed', 'failed'][Math.floor(Math.random() * 4)],
-        progress: Math.floor(Math.random() * 100),
-        coverUrl: `/placeholder-video-${(index % 5) + 1}.png`
-      }));
-      
-      tablePagination.total = 100;
-      videoLoading.value = false;
-    }, 500);
+    const { deleteToExtract } = await import('@/api/project');
+    await deleteToExtract(projectId.value, record.id);
+    message.success('删除成功');
+    await projectStore.fetchProjectDetail(projectId.value);
   } catch (error) {
-    message.error('加载视频列表失败：' + (error.message || '未知错误'));
-    videoLoading.value = false;
+    message.error(error.message || '删除失败');
   }
+};
+
+// 下载原视频（mock）
+const downloadOriginal = () => {
+  message.success('开始下载原视频');
+};
+
+// 前往水印嵌入页（携带当前项目ID）
+const goEmbed = () => {
+  if (!projectId.value) return;
+  router.push({ path: '/dashboard/watermark/embed', query: { projectId: String(projectId.value) } });
+};
+
+// 前往水印提取页（携带当前项目ID）
+const goExtract = () => {
+  if (!projectId.value) return;
+  router.push({ path: '/dashboard/watermark/extract', query: { projectId: String(projectId.value) } });
 };
 
 // 处理添加视频
@@ -514,8 +590,7 @@ onMounted(async () => {
     // 加载项目详情
     await projectStore.fetchProjectDetail(projectId.value);
     
-    // 加载视频列表
-    loadVideos();
+    // toExtract 列表来自详情，不单独加载
     
     // 设置定时器，定期更新进度
     progressTimer = setInterval(updateProjectProgress, 3000);
@@ -533,11 +608,67 @@ onUnmounted(() => {
 </script>
 
 <style lang="less" scoped>
-.project-detail {
-  .detail-card {
-    margin-bottom: 24px;
+.project-detail-container {
+  background-color: #f0f2f5;
+  min-height: calc(100vh - 184px);
+}
+
+.pd-section {
+  background-color: #fff;
+  padding: 24px;
+  margin: 16px 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+  .video-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 16px;
   }
-  
+
+  .video-card {
+    .video-body {
+      display: flex;
+      gap: 30px;
+      align-items: stretch;
+    }
+    .video-thumb {
+      width: 350px;
+      height: 174px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    }
+    .video-meta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      .meta-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: rgba(0,0,0,0.85);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+      .meta-items {
+        color: rgba(0,0,0,0.45);
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        .meta-item { white-space: nowrap; }
+      }
+      .meta-tags { margin-top: 2px; }
+      .video-actions { margin-top: 6px; }
+    }
+  }
+
   .detail-header {
     display: flex;
     justify-content: space-between;
@@ -579,7 +710,7 @@ onUnmounted(() => {
       }
     }
   }
-  
+    
   .video-list {
     .section-header {
       display: flex;
@@ -591,19 +722,6 @@ onUnmounted(() => {
         margin: 0;
       }
     }
-    
-    .video-preview {
-      width: 100px;
-      height: 56px;
-      overflow: hidden;
-      border-radius: 4px;
-      
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
   }
   
   .video-player {
@@ -613,5 +731,12 @@ onUnmounted(() => {
     border-radius: 4px;
     overflow: hidden;
   }
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .pd-section { padding: 16px; }
+  .video-sections {
+    grid-template-columns: 1fr;
+  }
 }
-</style> 
+</style>

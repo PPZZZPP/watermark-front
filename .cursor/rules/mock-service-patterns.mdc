@@ -1,0 +1,520 @@
+# Mock服务模式规范
+
+## MSW配置规范
+
+### 1. 浏览器配置
+```javascript
+// src/mock/browser.js
+import { setupWorker } from 'msw/browser'
+import { handlers } from './handlers'
+
+// 创建Service Worker
+export const worker = setupWorker(...handlers)
+
+// 开发环境配置
+if (import.meta.env.DEV) {
+  // 启用调试模式
+  worker.events.on('request:start', ({ request }) => {
+    console.log('[MSW] 请求开始:', request.method, request.url)
+  })
+  
+  worker.events.on('request:end', ({ request, response }) => {
+    console.log('[MSW] 请求结束:', request.method, request.url, response.status)
+  })
+  
+  worker.events.on('request:unhandled', ({ request }) => {
+    console.warn('[MSW] 未处理的请求:', request.method, request.url)
+  })
+}
+```
+
+### 2. 处理器规范
+```javascript
+// src/mock/handlers.js
+import { http, HttpResponse } from 'msw'
+import { userHandlers } from './user-handlers'
+import { projectHandlers } from './project-handlers'
+import { systemHandlers } from './system-handlers'
+
+// 合并所有处理器
+export const handlers = [
+  // 用户相关API
+  ...userHandlers,
+  
+  // 项目相关API
+  ...projectHandlers,
+  
+  // 系统相关API
+  ...systemHandlers,
+  
+  // 通用错误处理
+  http.all('*', ({ request }) => {
+    console.warn('[MSW] 未匹配的请求:', request.method, request.url)
+    return HttpResponse.json(
+      { code: 404, message: '接口不存在' },
+      { status: 404 }
+    )
+  })
+]
+```
+
+### 3. 用户API Mock
+```javascript
+// src/mock/user-handlers.js
+import { http, HttpResponse } from 'msw'
+import { mockData } from './data'
+
+export const userHandlers = [
+  // 用户登录
+  http.post('/api/user/login', async ({ request }) => {
+    try {
+      const { username, password } = await request.json()
+      
+      console.log('[MSW] 用户登录:', username)
+      
+      // 模拟验证逻辑
+      const user = mockData.users.find(u => 
+        u.username === username && u.password === password
+      )
+      
+      if (user) {
+        // 生成模拟token
+        const token = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        
+        return HttpResponse.json({
+          code: 200,
+          message: '登录成功',
+          data: {
+            token,
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              avatar: user.avatar,
+              createTime: user.createTime
+            }
+          }
+        })
+      } else {
+        return HttpResponse.json(
+          { code: 401, message: '用户名或密码错误' },
+          { status: 401 }
+        )
+      }
+    } catch (error) {
+      console.error('[MSW] 登录处理错误:', error)
+      return HttpResponse.json(
+        { code: 500, message: '服务器内部错误' },
+        { status: 500 }
+      )
+    }
+  }),
+  
+  // 获取用户信息
+  http.get('/api/user/info', ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { code: 401, message: '未授权访问' },
+        { status: 401 }
+      )
+    }
+    
+    // 模拟从token获取用户信息
+    const mockUser = mockData.users[0] // 默认返回第一个用户
+    
+    return HttpResponse.json({
+      code: 200,
+      message: '获取成功',
+      data: {
+        id: mockUser.id,
+        username: mockUser.username,
+        email: mockUser.email,
+        role: mockUser.role,
+        avatar: mockUser.avatar,
+        createTime: mockUser.createTime
+      }
+    })
+  }),
+  
+  // 用户注册
+  http.post('/api/user/register', async ({ request }) => {
+    try {
+      const { username, password, email } = await request.json()
+      
+      console.log('[MSW] 用户注册:', username)
+      
+      // 检查用户名是否已存在
+      const existingUser = mockData.users.find(u => u.username === username)
+      if (existingUser) {
+        return HttpResponse.json(
+          { code: 400, message: '用户名已存在' },
+          { status: 400 }
+        )
+      }
+      
+      // 模拟创建新用户
+      const newUser = {
+        id: Date.now(),
+        username,
+        password,
+        email,
+        role: 'user',
+        avatar: '',
+        createTime: new Date().toISOString()
+      }
+      
+      mockData.users.push(newUser)
+      
+      return HttpResponse.json({
+        code: 200,
+        message: '注册成功',
+        data: {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          role: newUser.role
+        }
+      })
+    } catch (error) {
+      console.error('[MSW] 注册处理错误:', error)
+      return HttpResponse.json(
+        { code: 500, message: '服务器内部错误' },
+        { status: 500 }
+      )
+    }
+  }),
+  
+  // 用户登出
+  http.post('/api/user/logout', () => {
+    console.log('[MSW] 用户登出')
+    
+    return HttpResponse.json({
+      code: 200,
+      message: '登出成功'
+    })
+  }),
+  
+  // 更新用户信息
+  http.put('/api/user/info', async ({ request }) => {
+    try {
+      const updateData = await request.json()
+      
+      console.log('[MSW] 更新用户信息:', updateData)
+      
+      return HttpResponse.json({
+        code: 200,
+        message: '更新成功',
+        data: updateData
+      })
+    } catch (error) {
+      console.error('[MSW] 更新用户信息错误:', error)
+      return HttpResponse.json(
+        { code: 500, message: '服务器内部错误' },
+        { status: 500 }
+      )
+    }
+  })
+]
+```
+
+### 4. 项目API Mock
+```javascript
+// src/mock/project-handlers.js
+import { http, HttpResponse } from 'msw'
+import { mockData } from './data'
+
+export const projectHandlers = [
+  // 获取项目列表
+  http.get('/api/project/list', ({ request }) => {
+    const url = new URL(request.url)
+    const page = parseInt(url.searchParams.get('page')) || 1
+    const pageSize = parseInt(url.searchParams.get('pageSize')) || 10
+    const status = url.searchParams.get('status')
+    const keyword = url.searchParams.get('keyword')
+    
+    console.log('[MSW] 获取项目列表:', { page, pageSize, status, keyword })
+    
+    let filteredProjects = [...mockData.projects]
+    
+    // 按状态筛选
+    if (status) {
+      filteredProjects = filteredProjects.filter(p => p.status === status)
+    }
+    
+    // 按关键词搜索
+    if (keyword) {
+      filteredProjects = filteredProjects.filter(p => 
+        p.name.toLowerCase().includes(keyword.toLowerCase()) ||
+        p.description.toLowerCase().includes(keyword.toLowerCase())
+      )
+    }
+    
+    // 分页
+    const start = (page - 1) * pageSize
+    const end = start + pageSize
+    const paginatedProjects = filteredProjects.slice(start, end)
+    
+    return HttpResponse.json({
+      code: 200,
+      message: '获取成功',
+      data: {
+        list: paginatedProjects,
+        pagination: {
+          current: page,
+          pageSize,
+          total: filteredProjects.length
+        }
+      }
+    })
+  }),
+  
+  // 获取项目详情
+  http.get('/api/project/:id', ({ params }) => {
+    const { id } = params
+    
+    console.log('[MSW] 获取项目详情:', id)
+    
+    const project = mockData.projects.find(p => p.id === parseInt(id))
+    
+    if (!project) {
+      return HttpResponse.json(
+        { code: 404, message: '项目不存在' },
+        { status: 404 }
+      )
+    }
+    
+    return HttpResponse.json({
+      code: 200,
+      message: '获取成功',
+      data: project
+    })
+  }),
+  
+  // 创建项目
+  http.post('/api/project/create', async ({ request }) => {
+    try {
+      const projectData = await request.json()
+      
+      console.log('[MSW] 创建项目:', projectData)
+      
+      const newProject = {
+        id: Date.now(),
+        ...projectData,
+        status: 'active',
+        createTime: new Date().toISOString(),
+        updateTime: new Date().toISOString(),
+        taskCount: 0,
+        completedTaskCount: 0
+      }
+      
+      mockData.projects.push(newProject)
+      
+      return HttpResponse.json({
+        code: 200,
+        message: '创建成功',
+        data: newProject
+      })
+    } catch (error) {
+      console.error('[MSW] 创建项目错误:', error)
+      return HttpResponse.json(
+        { code: 500, message: '服务器内部错误' },
+        { status: 500 }
+      )
+    }
+  }),
+  
+  // 更新项目
+  http.put('/api/project/:id', async ({ request, params }) => {
+    try {
+      const { id } = params
+      const updateData = await request.json()
+      
+      console.log('[MSW] 更新项目:', id, updateData)
+      
+      const projectIndex = mockData.projects.findIndex(p => p.id === parseInt(id))
+      
+      if (projectIndex === -1) {
+        return HttpResponse.json(
+          { code: 404, message: '项目不存在' },
+          { status: 404 }
+        )
+      }
+      
+      mockData.projects[projectIndex] = {
+        ...mockData.projects[projectIndex],
+        ...updateData,
+        updateTime: new Date().toISOString()
+      }
+      
+      return HttpResponse.json({
+        code: 200,
+        message: '更新成功',
+        data: mockData.projects[projectIndex]
+      })
+    } catch (error) {
+      console.error('[MSW] 更新项目错误:', error)
+      return HttpResponse.json(
+        { code: 500, message: '服务器内部错误' },
+        { status: 500 }
+      )
+    }
+  }),
+  
+  // 删除项目
+  http.delete('/api/project/:id', ({ params }) => {
+    const { id } = params
+    
+    console.log('[MSW] 删除项目:', id)
+    
+    const projectIndex = mockData.projects.findIndex(p => p.id === parseInt(id))
+    
+    if (projectIndex === -1) {
+      return HttpResponse.json(
+        { code: 404, message: '项目不存在' },
+        { status: 404 }
+      )
+    }
+    
+    mockData.projects.splice(projectIndex, 1)
+    
+    return HttpResponse.json({
+      code: 200,
+      message: '删除成功'
+    })
+  })
+]
+```
+
+### 5. Mock数据规范
+```javascript
+// src/mock/data.js
+export const mockData = {
+  // 用户数据
+  users: [
+    {
+      id: 1,
+      username: 'admin',
+      password: 'admin123',
+      email: 'admin@example.com',
+      role: 'admin',
+      avatar: 'https://avatars.githubusercontent.com/u/1?v=4',
+      createTime: '2024-01-01T00:00:00.000Z'
+    },
+    {
+      id: 2,
+      username: 'user',
+      password: 'user123',
+      email: 'user@example.com',
+      role: 'user',
+      avatar: 'https://avatars.githubusercontent.com/u/2?v=4',
+      createTime: '2024-01-02T00:00:00.000Z'
+    }
+  ],
+  
+  // 项目数据
+  projects: [
+    {
+      id: 1,
+      name: '视频水印项目A',
+      description: '这是一个视频水印处理项目',
+      status: 'active',
+      createTime: '2024-01-01T00:00:00.000Z',
+      updateTime: '2024-01-15T00:00:00.000Z',
+      taskCount: 10,
+      completedTaskCount: 6,
+      owner: 'admin',
+      members: ['admin', 'user']
+    },
+    {
+      id: 2,
+      name: '视频水印项目B',
+      description: '另一个视频水印处理项目',
+      status: 'completed',
+      createTime: '2024-01-10T00:00:00.000Z',
+      updateTime: '2024-01-20T00:00:00.000Z',
+      taskCount: 8,
+      completedTaskCount: 8,
+      owner: 'user',
+      members: ['user']
+    }
+  ],
+  
+  // 任务数据
+  tasks: [
+    {
+      id: 1,
+      projectId: 1,
+      name: '视频预处理',
+      description: '对视频进行预处理操作',
+      status: 'completed',
+      priority: 'high',
+      assignee: 'admin',
+      createTime: '2024-01-01T00:00:00.000Z',
+      updateTime: '2024-01-05T00:00:00.000Z',
+      dueDate: '2024-01-10T00:00:00.000Z'
+    },
+    {
+      id: 2,
+      projectId: 1,
+      name: '水印添加',
+      description: '为视频添加水印',
+      status: 'in_progress',
+      priority: 'medium',
+      assignee: 'user',
+      createTime: '2024-01-02T00:00:00.000Z',
+      updateTime: '2024-01-15T00:00:00.000Z',
+      dueDate: '2024-01-20T00:00:00.000Z'
+    }
+  ]
+}
+
+// 工具函数
+export const generateMockId = () => Date.now() + Math.random()
+
+export const formatDate = (date) => {
+  return new Date(date).toISOString()
+}
+
+export const getRandomStatus = () => {
+  const statuses = ['active', 'completed', 'paused']
+  return statuses[Math.floor(Math.random() * statuses.length)]
+}
+
+export const getRandomPriority = () => {
+  const priorities = ['low', 'medium', 'high']
+  return priorities[Math.floor(Math.random() * priorities.length)]
+}
+```
+
+### 6. 错误处理规范
+```javascript
+// 统一的错误响应格式
+const createErrorResponse = (code, message, status = 400) => {
+  return HttpResponse.json(
+    { code, message },
+    { status }
+  )
+}
+
+// 服务器错误
+const createServerError = (message = '服务器内部错误') => {
+  return createErrorResponse(500, message, 500)
+}
+
+// 未授权错误
+const createUnauthorizedError = (message = '未授权访问') => {
+  return createErrorResponse(401, message, 401)
+}
+
+// 资源不存在错误
+const createNotFoundError = (message = '资源不存在') => {
+  return createErrorResponse(404, message, 404)
+}
+```
+description:
+globs:
+alwaysApply: false
+---

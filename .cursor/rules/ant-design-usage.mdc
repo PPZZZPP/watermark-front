@@ -1,0 +1,399 @@
+# Ant Design Vue使用规范
+
+## 组件导入规范
+
+### 1. 基础组件导入
+```javascript
+import { 
+  message, 
+  notification, 
+  Modal,
+  Form,
+  Input,
+  Button,
+  Table,
+  Select,
+  DatePicker,
+  Upload,
+  Card,
+  Row,
+  Col,
+  Space,
+  Divider,
+  Tooltip,
+  Popconfirm,
+  Drawer,
+  Tabs,
+  Steps,
+  Progress,
+  Tag,
+  Badge,
+  Avatar,
+  Menu,
+  Dropdown,
+  Breadcrumb,
+  Pagination,
+  Spin,
+  Alert,
+  Result,
+  Empty,
+  Skeleton,
+  Timeline,
+  Tree,
+  TreeSelect,
+  Cascader,
+  Transfer,
+  Slider,
+  Rate,
+  Switch,
+  Radio,
+  Checkbox,
+  InputNumber,
+  TextArea,
+  AutoComplete,
+  Mentions,
+  TimePicker,
+  Calendar,
+  Statistic,
+  Descriptions,
+  List,
+  Comment,
+  Anchor,
+  BackTop,
+  Affix,
+  ConfigProvider,
+  LocaleProvider
+} from 'ant-design-vue'
+```
+
+### 2. 图标导入
+```javascript
+import { 
+  UserOutlined,
+  LockOutlined,
+  CheckCircleOutlined,
+  UserAddOutlined,
+  ThunderboltOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  HomeOutlined,
+  ProjectOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  DashboardOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  ReloadOutlined,
+  DownloadOutlined,
+  UploadOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  InfoCircleOutlined,
+  ExclamationCircleOutlined,
+  CloseOutlined,
+  CheckOutlined,
+  CloseCircleOutlined,
+  LoadingOutlined,
+  StarOutlined,
+  HeartOutlined,
+  LikeOutlined,
+  DislikeOutlined,
+  MessageOutlined,
+  BellOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  EnvironmentOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  GlobalOutlined,
+  LinkOutlined,
+  PictureOutlined,
+  VideoCameraOutlined,
+  AudioOutlined,
+  FileOutlined,
+  FolderOutlined,
+  CloudOutlined,
+  DatabaseOutlined,
+  ApiOutlined,
+  CodeOutlined,
+  BugOutlined,
+  ToolOutlined,
+  ExperimentOutlined,
+  SafetyOutlined,
+  KeyOutlined,
+  LockOutlined,
+  UnlockOutlined,
+  ShieldOutlined,
+  SafetyCertificateOutlined,
+  VerifiedOutlined,
+  StopOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
+  StepForwardOutlined,
+  StepBackwardOutlined,
+  FastForwardOutlined,
+  FastBackwardOutlined,
+  ShrinkOutlined,
+  ArrowsAltOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
+  MinusOutlined,
+  PlusOutlined,
+  QuestionOutlined,
+  QuestionCircleOutlined,
+  ExclamationOutlined,
+  ExclamationCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  InfoCircleOutlined,
+  WarningOutlined,
+  StopOutlined,
+  SyncOutlined,
+  LoadingOutlined,
+  RedoOutlined,
+  UndoOutlined,
+  SaveOutlined,
+  FileAddOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
+  FilePptOutlined,
+  FileImageOutlined,
+  FileZipOutlined,
+  FileUnknownOutlined,
+  FileTextOutlined,
+  FileMarkdownOutlined,
+  FileJpgOutlined,
+  FilePngOutlined,
+  FileGifOutlined,
+  FileBmpOutlined,
+  FileTiffOutlined,
+  FileSvgOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
+  FileExcelOutlined,
+  FilePptOutlined,
+  FileZipOutlined,
+  FileRarOutlined,
+  File7zOutlined,
+  FileTxtOutlined,
+  FileDocOutlined,
+  FileDocxOutlined,
+  FileXlsOutlined,
+  FileXlsxOutlined,
+  FilePptOutlined,
+  FilePptxOutlined,
+  FilePdfOutlined,
+  FileZipOutlined,
+  FileRarOutlined,
+  File7zOutlined,
+  FileTxtOutlined,
+  FileDocOutlined,
+  FileDocxOutlined,
+  FileXlsOutlined,
+  FileXlsxOutlined,
+  FilePptOutlined,
+  FilePptxOutlined
+} from '@ant-design/icons-vue'
+```
+
+## 组件使用规范
+
+### 1. 表单组件
+```vue
+<template>
+  <a-form
+    :model="formData"
+    :rules="rules"
+    @finish="handleSubmit"
+    ref="formRef"
+    layout="vertical"
+  >
+    <a-form-item name="username" label="用户名">
+      <a-input
+        v-model:value="formData.username"
+        placeholder="请输入用户名"
+        size="large"
+        :status="errors.username ? 'error' : ''"
+        @focus="clearError('username')"
+      >
+        <template #prefix>
+          <user-outlined />
+        </template>
+      </a-input>
+      <div v-if="errors.username" class="error-message">
+        {{ errors.username }}
+      </div>
+    </a-form-item>
+    
+    <a-form-item name="password" label="密码">
+      <a-input-password
+        v-model:value="formData.password"
+        placeholder="请输入密码"
+        size="large"
+        :status="errors.password ? 'error' : ''"
+        @focus="clearError('password')"
+      >
+        <template #prefix>
+          <lock-outlined />
+        </template>
+      </a-input-password>
+    </a-form-item>
+    
+    <a-form-item>
+      <a-button
+        type="primary"
+        html-type="submit"
+        :loading="loading"
+        size="large"
+        block
+      >
+        {{ loading ? '提交中...' : '提交' }}
+      </a-button>
+    </a-form-item>
+  </a-form>
+</template>
+```
+
+### 2. 表格组件
+```vue
+<template>
+  <a-table
+    :columns="columns"
+    :data-source="tableData"
+    :loading="loading"
+    :pagination="pagination"
+    @change="handleTableChange"
+    row-key="id"
+  >
+    <template #bodyCell="{ column, record }">
+      <template v-if="column.key === 'action'">
+        <a-space>
+          <a-button type="link" @click="handleEdit(record)">
+            <template #icon><edit-outlined /></template>
+            编辑
+          </a-button>
+          <a-popconfirm
+            title="确定要删除这条记录吗？"
+            @confirm="handleDelete(record)"
+          >
+            <a-button type="link" danger>
+              <template #icon><delete-outlined /></template>
+              删除
+            </a-button>
+          </a-popconfirm>
+        </a-space>
+      </template>
+    </template>
+  </a-table>
+</template>
+```
+
+### 3. 模态框组件
+```vue
+<template>
+  <a-modal
+    v-model:open="visible"
+    :title="modalTitle"
+    :confirm-loading="confirmLoading"
+    @ok="handleOk"
+    @cancel="handleCancel"
+    :width="600"
+  >
+    <a-form
+      :model="formData"
+      :rules="rules"
+      ref="formRef"
+      layout="vertical"
+    >
+      <!-- 表单内容 -->
+    </a-form>
+  </a-modal>
+</template>
+```
+
+### 4. 消息提示规范
+```javascript
+// 成功提示
+message.success('操作成功')
+
+// 错误提示
+message.error('操作失败')
+
+// 警告提示
+message.warning('警告信息')
+
+// 信息提示
+message.info('提示信息')
+
+// 加载提示
+message.loading('正在处理...', 2.5)
+
+// 通知
+notification.success({
+  message: '成功',
+  description: '操作已完成'
+})
+```
+
+### 5. 确认对话框规范
+```javascript
+// 确认删除
+Modal.confirm({
+  title: '确认删除',
+  content: '确定要删除这条记录吗？',
+  okText: '确定',
+  cancelText: '取消',
+  onOk: () => {
+    // 删除逻辑
+  }
+})
+
+// 确认操作
+Modal.confirm({
+  title: '确认操作',
+  content: '此操作不可撤销，确定继续吗？',
+  okText: '确定',
+  cancelText: '取消',
+  onOk: () => {
+    // 操作逻辑
+  }
+})
+```
+
+### 6. 样式规范
+```less
+// 自定义主题色
+@primary-color: #3b82f6;
+@link-color: #3b82f6;
+@success-color: #10b981;
+@warning-color: #f59e0b;
+@error-color: #ef4444;
+
+// 组件样式覆盖
+.ant-btn-primary {
+  background-color: @primary-color;
+  border-color: @primary-color;
+  
+  &:hover {
+    background-color: darken(@primary-color, 10%);
+    border-color: darken(@primary-color, 10%);
+  }
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: 600;
+}
+```
+description:
+globs:
+alwaysApply: false
+---

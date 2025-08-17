@@ -1,0 +1,136 @@
+# Vue编码规范
+
+## 组件编写规范
+
+### 1. 组件结构
+```vue
+<template>
+  <!-- 模板内容 -->
+</template>
+
+<script setup>
+// 导入语句
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+
+// 组件逻辑
+</script>
+
+<style lang="less" scoped>
+/* 样式 */
+</style>
+```
+
+### 2. 命名规范
+- **组件名**: 使用PascalCase（如：`UserProfile.vue`）
+- **文件名**: 使用PascalCase（如：`Login.vue`）
+- **变量名**: 使用camelCase（如：`userInfo`）
+- **常量名**: 使用UPPER_SNAKE_CASE（如：`API_BASE_URL`）
+- **CSS类名**: 使用kebab-case（如：`login-container`）
+
+### 3. 导入规范
+```javascript
+// 1. Vue相关导入
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+
+// 2. 第三方库导入
+import { message } from 'ant-design-vue'
+import { UserOutlined } from '@ant-design/icons-vue'
+
+// 3. 本地模块导入
+import { useUserStore } from '@/store/user'
+import { validateUsername } from '@/utils/validate'
+```
+
+### 4. 响应式数据规范
+```javascript
+// 使用ref定义简单响应式数据
+const loading = ref(false)
+const formRef = ref(null)
+
+// 使用reactive定义复杂响应式对象
+const loginForm = reactive({
+  username: '',
+  password: '',
+  remember: false
+})
+
+// 使用computed定义计算属性
+const isFormValid = computed(() => {
+  return loginForm.username && loginForm.password
+})
+```
+
+### 5. 事件处理规范
+```javascript
+// 事件处理函数使用handle前缀
+const handleSubmit = async (values) => {
+  try {
+    loading.value = true
+    // 处理逻辑
+  } catch (error) {
+    message.error('操作失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 清除函数使用clear前缀
+const clearError = (field) => {
+  loginErrors[field] = ''
+}
+```
+
+### 6. 样式规范
+```less
+// 使用BEM命名规范
+.login-container {
+  &__header {
+    // 头部样式
+  }
+  
+  &__content {
+    // 内容样式
+  }
+}
+
+// 使用Less变量
+@primary-color: #3b82f6;
+@border-radius: 8px;
+```
+
+### 7. 错误处理规范
+```javascript
+try {
+  const result = await apiCall()
+  if (result.code === 200) {
+    message.success('操作成功')
+  } else {
+    throw new Error(result.message)
+  }
+} catch (error) {
+  console.error('操作失败:', error)
+  message.error(error.message || '操作失败')
+}
+```
+
+### 8. 注释规范
+```javascript
+// 单行注释
+const token = localStorage.getItem('token') // 获取token
+
+/**
+ * 用户登录函数
+ * @param {Object} values - 登录表单数据
+ * @returns {Promise} 登录结果
+ */
+const handleLogin = async (values) => {
+  // 函数实现
+}
+```
+description:
+globs:
+alwaysApply: false
+---

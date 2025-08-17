@@ -1,0 +1,50 @@
+# Vue项目结构指南
+
+这是一个基于Vue 3 + Vite + Ant Design Vue的视频水印管理系统前端项目。
+
+## 项目架构
+
+### 核心技术栈
+- **Vue 3**: 使用Composition API
+- **Vite**: 构建工具
+- **Ant Design Vue**: UI组件库
+- **Pinia**: 状态管理
+- **Vue Router**: 路由管理
+- **Less**: CSS预处理器
+- **MSW**: Mock服务
+
+### 目录结构
+- `src/views/`: 页面组件，按功能模块组织
+  - `user/`: 用户相关页面（登录、注册、个人资料）
+  - `project/`: 项目管理页面
+  - `system/`: 系统管理页面
+- `src/components/`: 可复用组件
+  - `common/`: 通用组件
+  - `project/`: 项目相关组件
+- `src/store/`: Pinia状态管理
+- `src/api/`: API接口封装
+- `src/utils/`: 工具函数
+- `src/mock/`: Mock服务配置
+- `src/layouts/`: 布局组件
+
+### 开发规范
+1. 使用Composition API编写组件
+2. 使用Pinia进行状态管理
+3. 使用Ant Design Vue组件库
+4. 使用Less编写样式
+5. 遵循Vue 3最佳实践
+
+### 路由结构
+- `/login`: 登录页面
+- `/register`: 注册页面
+- `/dashboard`: 主控制台（需要登录）
+  - `/dashboard/profile`: 个人资料
+  - `/dashboard/project`: 项目概览
+  - `/dashboard/project/:id`: 项目详情
+  - `/dashboard/tasks`: 任务管理
+  - `/dashboard/system/user`: 用户管理（管理员）
+  - `/dashboard/system/model`: 模型管理（管理员）
+description:
+globs:
+alwaysApply: false
+---

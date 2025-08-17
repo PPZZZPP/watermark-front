@@ -1,5 +1,6 @@
 import { userHandlers } from './user-handlers';
 import { roleHandlers } from './role-handlers';
+import { systemModelHandlers } from './model-handlers';
 import { projectHandlers } from './project-handlers';
 import { videoHandlers } from './video-handlers';
 import { watermarkHandlers } from './watermark-handlers';
@@ -10,7 +11,8 @@ export const handlers = [
   ...roleHandlers,
   ...projectHandlers,
   ...videoHandlers,
-  ...watermarkHandlers
+  ...watermarkHandlers,
+  ...systemModelHandlers
 ];
 
 export default handlers;

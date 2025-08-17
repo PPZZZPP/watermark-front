@@ -17,6 +17,13 @@ const TaskManagement = () => import('@/views/project/TaskManagement.vue');
 const UserManagement = () => import('@/views/system/UserManagement.vue');
 const ModelManagement = () => import('@/views/system/ModelManagement.vue');
 
+// 水印模块
+const WatermarkEmbed = () => import('@/views/watermark/Embed.vue');
+const WatermarkExtract = () => import('@/views/watermark/Extract.vue');
+// 合规模块 & 接口文档
+const ComplianceRecords = () => import('@/views/compliance/ComplianceRecords.vue');
+const ApiDocs = () => import('@/views/api/ApiDocs.vue');
+
 // 获取token的工具函数
 const getToken = () => {
   return localStorage.getItem('token');
@@ -71,6 +78,7 @@ const routes = [
           parentTitle: '用户管理'
         },
       },
+
       // 项目管理 - 项目概览
       {
         path: 'project',
@@ -104,6 +112,7 @@ const routes = [
           parentTitle: '项目管理'
         },
       },
+      
       // 系统管理 - 用户管理
       {
         path: 'system/user',
@@ -128,6 +137,58 @@ const routes = [
           parentTitle: '系统管理'
         },
       },
+
+      // 水印管理 - 水印嵌入
+      {
+        path: 'watermark/embed',
+        name: 'WatermarkEmbed',
+        component: WatermarkEmbed,
+        meta: {
+          requiresAuth: true,
+          title: '水印嵌入',
+          parentTitle: '水印管理'
+        }
+      },
+      // 水印管理 - 水印提取
+      {
+        path: 'watermark/extract',
+        name: 'WatermarkExtract',
+        component: WatermarkExtract,
+        meta: {
+          requiresAuth: true,
+          title: '水印提取',
+          parentTitle: '水印管理'
+        }
+      },
+      // 合规模块 - 审计记录
+      {
+        path: 'compliance/records',
+        name: 'ComplianceRecords',
+        component: ComplianceRecords,
+        meta: {
+          requiresAuth: true,
+          title: '合规审计记录',
+          parentTitle: '合规模块'
+        }
+      },
+      // 接口模块 - API 文档
+      {
+        path: 'api/docs',
+        name: 'ApiDocs',
+        component: ApiDocs,
+        meta: {
+          requiresAuth: true,
+          title: '接口模块',
+          parentTitle: '开发者'
+        }
+      },
+      
+      // 接口模块
+      // {
+      //   path: 'apiModel',
+      //   name: 'ApiModel',
+      //   component: ApiModel,
+      // },
     ],
   },
   // 404页面

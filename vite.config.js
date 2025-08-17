@@ -17,8 +17,12 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // 保持后端的 /api 前缀不被移除，直接透传
       },
+      '/system': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
     },
   },
   css: {

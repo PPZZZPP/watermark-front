@@ -112,8 +112,50 @@ export let projects = [
     progress: 100,
     videoCount: 5,
     createTime: '2023-05-15T08:30:00.000Z',
-    coverUrl: '/placeholder-video-1.png',
-    userId: 1
+    coverUrl: '/img2.png',
+    userId: 1,
+    originalVideo: {
+      id: 'orig-1',
+      filename: '企业宣传原视频.mp4',
+      size: 123_456_789,
+      uploadTime: '2023-05-15T08:40:00.000Z',
+      url: '/sample-original.mp4',
+      coverUrl: '/img2.png'
+    },
+    embeddedVideo: {
+      id: 'embed-1',
+      filename: '企业宣传原视频-embedded.mp4',
+      size: 136_000_000,
+      createTime: '2023-05-16T10:00:00.000Z',
+      url: '/sample-embedded.mp4',
+      coverUrl: '/img2.png',
+      model: 'wm-pro',
+      watermarkText: 'DEMO-WM-2025'
+    },
+    toExtractVideos: [
+      {
+        id: 'toextract-1',
+        filename: '宣传成片_剪辑01.mp4',
+        size: 52_345_678,
+        uploadTime: '2023-05-17T11:20:00.000Z',
+        status: 'pending',
+        progress: 0,
+        watermarkInfo: '',
+        model: '',
+        note: '第一批样片'
+      },
+      {
+        id: 'toextract-2',
+        filename: '宣传成片_剪辑02.mp4',
+        size: 48_765_432,
+        uploadTime: '2023-05-18T09:15:00.000Z',
+        status: 'completed',
+        progress: 100,
+        watermarkInfo: 'DEMO-WM-2025',
+        model: 'wm-pro',
+        note: ''
+      }
+    ]
   },
   {
     id: 'project-2',
@@ -123,8 +165,11 @@ export let projects = [
     progress: 45,
     videoCount: 3,
     createTime: '2023-05-28T14:20:00.000Z',
-    coverUrl: '/placeholder-video-2.png',
-    userId: 1
+    coverUrl: '/img1.png',
+    userId: 1,
+    originalVideo: null,
+    embeddedVideo: null,
+    toExtractVideos: []
   },
   {
     id: 'project-3',
@@ -135,7 +180,10 @@ export let projects = [
     videoCount: 12,
     createTime: '2023-06-01T09:45:00.000Z',
     coverUrl: '/placeholder-video-3.png',
-    userId: 2
+    userId: 2,
+    originalVideo: null,
+    embeddedVideo: null,
+    toExtractVideos: []
   },
   {
     id: 'project-4',
@@ -146,7 +194,10 @@ export let projects = [
     videoCount: 2,
     createTime: '2023-06-05T16:10:00.000Z',
     coverUrl: '/placeholder-video-4.png',
-    userId: 2
+    userId: 2,
+    originalVideo: null,
+    embeddedVideo: null,
+    toExtractVideos: []
   }
 ];
 

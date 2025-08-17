@@ -388,6 +388,7 @@ export const userHandlers = [
     const page = parseInt(url.searchParams.get('page') || '1');
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10');
     const keyword = url.searchParams.get('keyword');
+    const role = url.searchParams.get('role');
     
     let filteredUsers = [...users];
     
@@ -399,6 +400,10 @@ export const userHandlers = [
         user.email.includes(keyword) || 
         user.phone.includes(keyword)
       );
+    }
+    // 根据角色过滤
+    if (role) {
+      filteredUsers = filteredUsers.filter(user => user.role === role);
     }
     
     // 计算分页

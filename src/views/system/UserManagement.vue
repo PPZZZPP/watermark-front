@@ -30,8 +30,10 @@
         <a-form-item label="邮箱">
           <a-input v-model:value="searchForm.email" placeholder="请输入邮箱" />
         </a-form-item>
-        <a-form-item label="部门">
-          <a-input v-model:value="searchForm.department" placeholder="请输入部门" />
+        <a-form-item label="角色">
+          <a-select v-model:value="searchForm.role" placeholder="请选择角色" allow-clear style="width: 160px">
+            <a-select-option v-for="role in roleList" :key="role.code" :value="role.code">{{ role.name }}</a-select-option>
+          </a-select>
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="handleSearch">
@@ -319,6 +321,7 @@ const searchForm = reactive({
   username: '',
   email: '',
   department: '',
+  role: ''
 });
 
 // 用户表单
@@ -366,11 +369,6 @@ const columns = [
     title: '性别',
     dataIndex: 'gender',
     key: 'gender',
-  },
-  {
-    title: '部门',
-    dataIndex: 'department',
-    key: 'department',
   },
   {
     title: '角色',

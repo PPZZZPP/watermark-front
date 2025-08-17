@@ -1,20 +1,22 @@
 <template>
-  <div class="project-dashboard">
-    <a-card class="dashboard-card" :bordered="false">
-      <template #title>
-        <div class="dashboard-header">
-          <div class="dashboard-title">
-            <h2>项目概览</h2>
-            <p class="dashboard-subtitle">管理您的视频水印项目</p>
-          </div>
-          <div class="dashboard-actions">
-            <a-button type="primary" @click="handleCreateProject">
-              <template #icon><plus-outlined /></template>
-              创建项目
-            </a-button>
-          </div>
-        </div>
+  <div class="project-dashboard-container">
+    <PageHeader title="项目概览" subTitle="管理您的视频水印项目">
+      <template #icon>
+        <project-outlined />
       </template>
+      <template #tags>
+        <a-tag color="blue">项目管理</a-tag>
+        <a-tag color="purple">项目概览</a-tag>
+      </template>
+      <template #extra>
+        <a-button type="primary" @click="handleCreateProject">
+          <template #icon><plus-outlined /></template>
+          创建项目
+        </a-button>
+      </template>
+    </PageHeader>
+
+    <div class="pd-section">
       
       <!-- 筛选器 -->
       <div class="filter-container">
@@ -134,7 +136,7 @@
           </div>
         </a-spin>
       </div>
-    </a-card>
+    </div>
     
     <!-- 创建/编辑项目对话框 -->
     <a-modal
@@ -150,6 +152,18 @@
         </a-form-item>
         <a-form-item name="description" label="项目描述">
           <a-textarea v-model:value="projectForm.description" placeholder="请输入项目描述" :rows="4" />
+        </a-form-item>
+        <a-form-item name="originalVideo" label="原视频">
+          <a-upload
+            :before-upload="file => { projectForm.originalVideo = { filename: file.name, size: file.size }; return false; }"
+            :max-count="1"
+            accept="video/*"
+            :file-list="projectForm.originalVideo ? [{ name: projectForm.originalVideo.filename, uid: '-1' }] : []"
+            @remove="() => projectForm.originalVideo = null"
+          >
+            <a-button>选择原视频</a-button>
+          </a-upload>
+          <div style="color: rgba(0,0,0,0.45); margin-top: 6px;">一个项目只能上传一个原视频</div>
         </a-form-item>
       </a-form>
     </a-modal>
@@ -171,6 +185,8 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, Modal } from 'ant-design-vue';
+import { ProjectOutlined } from '@ant-design/icons-vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import { 
   PlusOutlined, 
   SearchOutlined, 
@@ -208,7 +224,8 @@ const filterForm = reactive({
 const projectFormRef = ref(null);
 const projectForm = reactive({
   name: '',
-  description: ''
+  description: '',
+  originalVideo: null
 });
 
 // 项目表单规则
@@ -219,7 +236,10 @@ const projectRules = {
   ],
   description: [
     { max: 500, message: '项目描述最多500个字符', trigger: 'blur' }
-  ]
+    ],
+    originalVideo: [
+      { required: true, message: '请上传原视频', trigger: 'change' }
+    ]
 };
 
 // 项目模态框状态
@@ -355,7 +375,8 @@ const handleProjectModalOk = async () => {
       // 创建项目
       await projectStore.createProject({
         name: projectForm.name,
-        description: projectForm.description
+        description: projectForm.description,
+        originalVideo: projectForm.originalVideo
       });
       message.success('项目创建成功');
     }
@@ -476,31 +497,19 @@ onUnmounted(() => {
 </script>
 
 <style lang="less" scoped>
-.project-dashboard {
-  .dashboard-card {
-    margin-bottom: 24px;
-  }
-  
-  .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    
-    .dashboard-title {
-      h2 {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 600;
-      }
-      
-      .dashboard-subtitle {
-        margin-top: 8px;
-        color: rgba(0, 0, 0, 0.45);
-      }
-    }
-  }
-  
+.project-dashboard-container {
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 184px);
+}
+
+.pd-section {
+  background-color: #fff;
+  padding: 24px;
+  margin: 16px 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
   .filter-container {
     margin-bottom: 24px;
   }
@@ -581,5 +590,7 @@ onUnmounted(() => {
     margin-top: 24px;
     text-align: right;
   }
+@media (max-width: 768px) {
+  .pd-section { padding: 16px; }
 }
 </style> 

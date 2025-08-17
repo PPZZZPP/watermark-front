@@ -18,22 +18,8 @@
         theme="dark"
         mode="inline"
       >
-        <a-menu-item key="dashboard" @click="() => router.push('/dashboard')">
-          <template #icon><home-outlined /></template>
-          <span>控制台</span>
-        </a-menu-item>
-        
-        <a-sub-menu key="user-management">
-          <template #icon><team-outlined /></template>
-          <template #title>用户管理</template>
-          <a-menu-item key="profile" @click="() => router.push('/dashboard/profile')">
-            <template #icon><user-outlined /></template>
-            <span>个人信息</span>
-          </a-menu-item>
-        </a-sub-menu>
-        
         <a-sub-menu key="project-management">
-          <template #icon><project-outlined /></template>
+          <template #icon><home-outlined /></template>
           <template #title>项目管理</template>
           <a-menu-item key="project-dashboard" @click="() => router.push('/dashboard/project')">
             <template #icon><appstore-outlined /></template>
@@ -46,26 +32,31 @@
         </a-sub-menu>
         
         <a-sub-menu key="watermark-management">
-          <template #icon><picture-outlined /></template>
+          <template #icon><unordered-list-outlined /></template>
           <template #title>水印管理</template>
-          <a-menu-item key="watermark-templates" @click="() => router.push('/dashboard/watermark-templates')">
-            <template #icon><appstore-outlined /></template>
-            <span>水印模板</span>
+          <a-menu-item key="watermark-embed" @click="() => router.push('/dashboard/watermark/embed')">
+            <template #icon><video-camera-outlined/></template>
+            <span>水印嵌入</span>
+          </a-menu-item>
+          <a-menu-item key="watermark-extract" @click="() => router.push('/dashboard/watermark/extract')">
+            <template #icon><video-camera-outlined/></template>
+            <span>水印提取</span>
+          </a-menu-item>
+        </a-sub-menu>
+
+        <a-sub-menu key="rule-management" v-if="isAdmin">
+          <template #icon><setting-outlined /></template>
+          <template #title>合规模块</template>
+          <a-menu-item key="compliance-records" @click="() => router.push('/dashboard/compliance/records')">
+            <template #icon><team-outlined /></template>
+            <span>合规审计记录</span>
           </a-menu-item>
         </a-sub-menu>
         
-        <a-sub-menu key="video-management">
-          <template #icon><video-camera-outlined /></template>
-          <template #title>视频管理</template>
-          <a-menu-item key="video-list" @click="() => router.push('/dashboard/video-list')">
-            <template #icon><unordered-list-outlined /></template>
-            <span>视频列表</span>
-          </a-menu-item>
-          <a-menu-item key="video-processing" @click="() => router.push('/dashboard/video-processing')">
-            <template #icon><loading-outlined /></template>
-            <span>视频处理</span>
-          </a-menu-item>
-        </a-sub-menu>
+        <a-menu-item key="apiDocs" @click="() => router.push('/dashboard/api/docs')">
+          <template #icon><setting-outlined /></template>
+          <span>接口模块</span>
+        </a-menu-item>
         
         <!-- 系统管理菜单（仅管理员可见） -->
         <a-sub-menu key="system-management" v-if="isAdmin">
@@ -80,11 +71,6 @@
             <span>模型管理</span>
           </a-menu-item>
         </a-sub-menu>
-        
-        <a-menu-item key="settings" @click="() => router.push('/dashboard/settings')">
-          <template #icon><setting-outlined /></template>
-          <span>系统设置</span>
-        </a-menu-item>
       </a-menu>
     </a-layout-sider>
     
@@ -153,11 +139,6 @@
           </transition>
         </router-view>
       </a-layout-content>
-      
-      <!-- 页脚 -->
-      <a-layout-footer class="layout-footer">
-        视频水印系统 &copy; {{ new Date().getFullYear() }} | 高效管理您的视频水印
-      </a-layout-footer>
     </a-layout>
   </a-layout>
 </template>
@@ -206,8 +187,12 @@ watch(
       selectedKeys.value = ['profile'];
     } else if (path.includes('/dashboard/project')) {
       selectedKeys.value = ['project-dashboard'];
-    } else if (path.includes('/dashboard/watermark-templates')) {
-      selectedKeys.value = ['watermark-templates'];
+    } else if (path.includes('/dashboard/tasks')) {
+      selectedKeys.value = ['task-management'];
+    } else if (path.includes('/dashboard/watermark/embed')) {
+      selectedKeys.value = ['watermark-embed'];
+    } else if (path.includes('/dashboard/watermark/extract')) {
+      selectedKeys.value = ['watermark-extract'];
     } else if (path.includes('/dashboard/video-list')) {
       selectedKeys.value = ['video-list'];
     } else if (path.includes('/dashboard/video-processing')) {
@@ -383,15 +368,6 @@ const handleLogout = () => {
   position: relative;
 }
 
-// 页脚样式
-.layout-footer {
-  flex: 0 0 auto; /* 自适应高度 */
-  text-align: center;
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 14px;
-  padding: 16px 50px;
-  background: transparent;
-}
 
 // 用户下拉菜单
 :deep(.user-dropdown-menu) {
