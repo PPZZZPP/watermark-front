@@ -36,13 +36,16 @@ public class WatermarkController {
         String model = (String) body.get("model");
         String watermarkText = (String) body.getOrDefault("watermarkText", "");
 
-        var project = projectRepository.findById(projectId).orElseThrow();
+        com.example.demo.entity.Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        var original = videoRepository.findAll().stream()
-                .filter(v -> v.getProjectId().equals(projectId) && v.getRole() == VideoRole.original)
-                .findFirst().orElseThrow();
+        com.example.demo.entity.Video original = null;
+        for (com.example.demo.entity.Video v : videoRepository.findAll()) {
+            if (v.getProjectId().equals(projectId) && v.getRole() == VideoRole.original) { original = v; break; }
+        }
+        if (original == null) throw new IllegalStateException("original video not found");
 
-        var embedded = Video.builder()
+        com.example.demo.entity.Video embedded = Video.builder()
                 .projectId(projectId)
                 .role(VideoRole.embedded)
                 .filename(original.getFilename().replaceAll("(\\.[^.]+)?$", "-embedded.mp4"))
@@ -60,18 +63,27 @@ public class WatermarkController {
         embedded = videoRepository.save(embedded);
 
         // 记录任务（embed）
-        var task = com.example.demo.entity.VideoTask.builder()
+        java.util.Map<String, Object> taskParams = new java.util.HashMap<String, Object>();
+        taskParams.put("model", model);
+        taskParams.put("watermarkText", watermarkText);
+        java.util.Map<String, Object> taskResult = new java.util.HashMap<String, Object>();
+        taskResult.put("videoId", embedded.getId());
+
+        com.example.demo.entity.VideoTask task = com.example.demo.entity.VideoTask.builder()
                 .projectId(projectId)
                 .videoId(embedded.getId())
                 .type("embed")
                 .status("completed")
                 .progress(100)
-                .paramsJson(toJson(Map.of("model", model, "watermarkText", watermarkText)))
-                .resultJson(toJson(Map.of("videoId", embedded.getId())))
+                .paramsJson(toJson(taskParams))
+                .resultJson(toJson(taskResult))
                 .createdAt(java.time.Instant.now())
                 .updatedAt(java.time.Instant.now())
                 .build();
         videoTaskRepository.save(task);
+
+        java.util.Map<String, Object> opParams = new java.util.HashMap<String, Object>();
+        opParams.put("watermarkText", watermarkText);
 
         complianceService.recordOperation(
                 "embed",
@@ -80,7 +92,7 @@ public class WatermarkController {
                 embedded.getId(),
                 model,
                 "1.0.0",
-                toJson(Map.of("watermarkText", watermarkText)),
+                toJson(opParams),
                 "Embedded video generated",
                 "sha256",
                 "mockhash=="
@@ -101,7 +113,8 @@ public class WatermarkController {
         Long projectId = parseLong(body.get("projectId"));
         Long videoId = parseLong(body.get("videoId"));
 
-        var video = videoRepository.findById(videoId).orElseThrow();
+        com.example.demo.entity.Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
 
         String result = "WM-INFO-FAKE";
         String model = "wm-pro";
@@ -114,14 +127,18 @@ public class WatermarkController {
         videoRepository.save(video);
 
         // 记录任务（extract）
-        var task = com.example.demo.entity.VideoTask.builder()
+        java.util.Map<String, Object> extractResult = new java.util.HashMap<String, Object>();
+        extractResult.put("watermark", result);
+        extractResult.put("model", model);
+
+        com.example.demo.entity.VideoTask task = com.example.demo.entity.VideoTask.builder()
                 .projectId(projectId)
                 .videoId(videoId)
                 .type("extract")
                 .status("completed")
                 .progress(100)
                 .paramsJson(null)
-                .resultJson(toJson(Map.of("watermark", result, "model", model)))
+                .resultJson(toJson(extractResult))
                 .createdAt(java.time.Instant.now())
                 .updatedAt(java.time.Instant.now())
                 .build();
@@ -156,7 +173,7 @@ public class WatermarkController {
     private String toJson(Map<String, Object> map) {
         StringBuilder sb = new StringBuilder("{");
         boolean first = true;
-        for (var e : map.entrySet()) {
+        for (java.util.Map.Entry<String, Object> e : map.entrySet()) {
             if (!first) sb.append(',');
             sb.append('"').append(e.getKey()).append('"').append(':');
             Object val = e.getValue();

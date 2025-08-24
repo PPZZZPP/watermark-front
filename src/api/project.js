@@ -19,10 +19,20 @@ export function getProjectDetail(id) {
 
 // 创建项目
 export function createProject(data) {
+  // data: { name, description, originalVideo: { filename, size } } 改为 multipart
+  const fd = new FormData();
+  fd.append('name', data.name || '');
+  if (data.description) fd.append('description', data.description);
+  // 由调用方在 before-upload 阶段持有原始 File，这里从全局选取不方便，改由组件直接传入 File 更稳妥
+  // 兼容当前结构：若 data.file 存在则用；否则抛错提示页面调整
+  if (data.file instanceof File) {
+    fd.append('file', data.file);
+  }
   return request({
     url: '/api/project/create',
     method: 'post',
-    data
+    data: fd,
+    headers: { 'Content-Type': 'multipart/form-data' }
   });
 }
 

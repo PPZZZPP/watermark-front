@@ -92,7 +92,7 @@
             @cancel="closeUploadModal"
             destroyOnClose
           >
-            <a-alert type="info" message="支持批量选择视频文件，当前不进行实际文件上传，仅模拟记录文件名和大小" show-icon style="margin-bottom: 12px" />
+            <a-alert type="info" message="支持批量选择视频文件，将实际上传并保存到服务器资源目录（/uploads/to-extract/{projectId}）" show-icon style="margin-bottom: 12px" />
             <a-upload :before-upload="beforeUpload" :file-list="fileList" @remove="onRemove" :multiple="true" accept="video/*">
               <a-button>
                 <template #icon><upload-outlined /></template>
@@ -196,7 +196,9 @@ const uploadToExtract = async () => {
   uploadLoading.value = true;
   try {
     for (const f of fileList.value) {
-      await request({ url: `/api/project/${selectedProjectId.value}/to-extract`, method: 'post', data: { filename: f.name, size: f.size } });
+      const fd = new FormData();
+      fd.append('file', f);
+      await request({ url: `/api/project/${selectedProjectId.value}/to-extract`, method: 'post', data: fd, headers: { 'Content-Type': 'multipart/form-data' } });
     }
     message.success('上传成功');
     fileList.value = [];

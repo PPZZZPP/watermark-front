@@ -1,91 +1,94 @@
-Java 源码目录说明
+后端启动与运维说明（Java 8 / Spring Boot 2.7）
 
-这里是后端 Spring Boot 的源码目录（包路径 `com.example.watermark`）。
+本文件说明后端的启动要求、数据库配置、构建与运行方式、健康检查与常见问题。
 
-模块一览（关键包）：
-- `com/example/watermark/WatermarkBackendApplication.java`：启动类
-- `com/example/watermark/web/ApiResponse.java`：统一响应体
-- `com/example/watermark/project/`：项目实体、仓库与接口
-- `com/example/watermark/video/`：视频实体、枚举与仓库
-- `com/example/watermark/watermark/`：水印嵌入/提取接口
-- `com/example/watermark/systemmodel/`：系统模型（发布/启用）
-- `com/example/watermark/compliance/`：合规审计与报告导出
-- `com/example/watermark/user/`：用户（示例）
+一、技术与目录
 
-快速入口：
-- 启动：在项目根 `backend-spring` 执行 `mvn spring-boot:run`（默认 H2 内存库）
-- 配置：`src/main/resources/application.yml`（端口、数据源 Profiles 等）
-- H2 控制台：`http://localhost:8080/h2-console`（JDBC URL 使用 `jdbc:h2:mem:watermark`）
+- JDK: Java 8（pom.xml 已设置 <java.version>1.8）
+- Spring Boot: 2.7.18
+- 数据库: MySQL 8（默认，不再使用 H2）
+- 包路径: `com.example.demo`
+- 关键位置:
+  - 程序入口: `com/example/demo/DemoApplication.java`
+  - 配置文件: `src/main/resources/application.yml`
+  - Web 统一响应: `com/example/demo/web/ApiResponse.java`
+  - 领域模块: `controller/`, `entity/`, `repository/`, `service/`
 
-进一步的详细说明见同级包下的 `com/example/watermark/PROJECT_STRUCTURE.md`。
+二、数据库配置（MySQL 默认）
 
-# 后端项目结构与运行指南（面向初学者）
+- 连接字符串已启用自动建库: `createDatabaseIfNotExist=true`
+- 默认配置（可在启动时覆盖）:
+  - URL: `jdbc:mysql://localhost:3306/watermark?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&createDatabaseIfNotExist=true`
+  - 用户名: `root`
+  - 密码: `123`
+- 启动时会自动执行初始化脚本（Spring SQL init 已开启）:
+  - `src/main/resources/schema.sql`（建表/索引/外键等）
+  - `src/main/resources/data.sql`（示例数据）
 
-本后端基于 Spring Boot 3（父版本 3.3.2），默认使用内存数据库 H2，零配置即可启动。
+三、快速构建与启动（Windows PowerShell）
 
-## 目录结构速览
-
-```
-backend-spring/
-  ├─ pom.xml                         # Maven 构建配置（依赖、插件、JDK 版本）
-  └─ src/
-     ├─ main/
-     │  ├─ java/
-     │  │  └─ com/example/watermark/
-     │  │     ├─ WatermarkBackendApplication.java     # 程序入口（main 方法），初始化示例模型
-     │  │     ├─ compliance/                           # 合规审计：记录每次嵌入/提取操作
-     │  │     ├─ domain/                               # 通用枚举、共享领域对象
-     │  │     ├─ project/                              # 项目实体/接口
-     │  │     ├─ systemmodel/                          # 系统模型：已发布的水印模型
-     │  │     ├─ user/                                 # 用户实体/接口
-     │  │     ├─ video/                                # 视频实体/查询接口
-     │  │     ├─ watermark/                            # 水印相关接口（嵌入/提取）
-     │  │     └─ web/                                  # 通用响应封装等
-     │  └─ resources/
-     │     └─ application.yml          # 应用配置（已分 H2 / MySQL 两套 profile）
-     └─ test/                          # 测试（当前为空，可后续补充）
+1) 进入后端目录并构建
+```powershell
+cd backend-spring
+mvn -DskipTests clean package
 ```
 
-## 运行方式（你已安装 JDK 24）
+2) 使用 Maven 启动（开发期推荐）
+```powershell
+mvn -DskipTests spring-boot:run
+```
+如需覆盖数据库账户:
+```powershell
+mvn -DskipTests -Dspring.datasource.username=root -Dspring.datasource.password=123 spring-boot:run
+```
 
-- 我们在 `pom.xml` 将编译目标设为 `Java 21`（LTS），用 JDK 24 运行没有问题（JDK24 向下运行 Java21 目标）。
-- 如需用 JDK 24 编译，可把 `pom.xml` 中的 `<java.version>` 改为 `24`，并确保依赖兼容。
+3) 或使用可执行 JAR 启动
+```powershell
+java -jar target/watermark-backend-0.0.1-SNAPSHOT.jar
+```
+覆盖数据库账户:
+```powershell
+java -Dspring.datasource.username=root -Dspring.datasource.password=123 -jar target/watermark-backend-0.0.1-SNAPSHOT.jar
+```
 
-### 方式A：使用内存数据库 H2（默认、推荐给初学者）
-1. 进入后端目录：`backend-spring`
-2. 命令行执行（Windows PowerShell）：
-   ```powershell
-   mvn -v | cat
-   mvn clean spring-boot:run -Dspring-boot.run.profiles=h2 | cat
-   ```
-   或先构建再运行：
-   ```powershell
-   mvn clean package -DskipTests | cat
-   java -jar target/watermark-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=h2
-   ```
-3. 启动成功后：
-   - 服务地址：`http://localhost:8080`
-   - H2 控制台：`http://localhost:8080/h2-console`
+四、健康检查与验证
 
-### 方式B：切换到本地 MySQL
-1. 确保本地 MySQL 运行，数据库 `watermark` 已创建，用户名/密码与 `application.yml` 的 mysql profile 一致（默认 `root/root`）。
-2. 启动命令：
-   ```powershell
-   mvn clean spring-boot:run -Dspring-boot.run.profiles=mysql | cat
-   ```
+- 健康检查（无需依赖数据库）:
+  - `GET http://localhost:8080/health/ping`
+- 数据库连通性检查:
+  - `GET http://localhost:8080/health/db`
+- 示例功能接口（分页列出模型）:
+  - `GET http://localhost:8080/system/model/list?page=1&pageSize=10`
 
-## 前端联调
-- 前端 Vite 代理已将 `/api` 代理到 `http://localhost:8080`（见 `vite.config.js`）。
-- 启动前端（在项目根目录）：
-  ```powershell
-  npm i
-  npm run dev
-  ```
-- 浏览器将打开 `http://localhost:3000`。
+五、常见问题与排错
 
-## 常见问题
-- 端口被占用：修改 `resources/application.yml` 中 `server.port`。
-- JDK 版本冲突：如需使用 JDK 24 编译，将 `pom.xml` 的 `<java.version>` 改为 `24`，并确保 `maven-compiler-plugin` 使用 `<release>24</release>`。
-- 数据库连不上：优先用 H2（默认 profile `h2`），或检查 MySQL 地址/账号。
+- Access denied for user 'root'@'localhost'
+  - 确认用户名/密码；或以参数覆盖启动（见上文）。
+  - 如需新建数据库与用户:
+    ```sql
+    CREATE DATABASE IF NOT EXISTS watermark DEFAULT CHARACTER SET utf8mb4;
+    CREATE USER 'wm'@'localhost' IDENTIFIED BY 'wm123';
+    GRANT ALL PRIVILEGES ON watermark.* TO 'wm'@'localhost';
+    FLUSH PRIVILEGES;
+    ```
+    随后以 `-Dspring.datasource.username=wm -Dspring.datasource.password=wm123` 启动。
 
-祝你编码愉快！
+- Unknown database 'watermark'
+  - 连接串已包含 `createDatabaseIfNotExist=true`；若仍失败，可手工执行 `CREATE DATABASE watermark;`。
+
+- UnsupportedClassVersionError（类版本不兼容）
+  - 请确保 `java -version`、`javac -version` 都为 1.8，并在 `backend-spring` 执行:
+    ```powershell
+    mvn -DskipTests clean package
+    ```
+    然后再启动。
+
+- 端口被占用
+  - 修改 `src/main/resources/application.yml` 中 `server.port`，或释放目标端口。
+
+六、前端联调（可选）
+
+- 前端开发服务器默认在 `http://localhost:3000`，后端在 `http://localhost:8080`。
+- 按需在前端代理或接口基址中指向后端地址。
+
+—— 文档到此。如需补充更多环境/部署细节，可在此文件继续完善。

@@ -1,11 +1,11 @@
 package com.example.demo.entity;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "user_roles", indexes = {
-		@Index(name = "uk_user_role", columnList = "userId,roleId", unique = true)
+		@Index(name = "uk_user_role", columnList = "user_id,role_id", unique = true)
 })
 @Data
 @Builder

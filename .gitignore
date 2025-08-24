@@ -22,3 +22,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backend build & runtime artifacts
+backend-spring/target
+backend-spring/backend-spring/uploads
+
+# Local env & OS
+.env.local
+.env.*.local
+*.iml
+Thumbs.db
+
+# Frontend build
+dist/
+dist-ssr/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*

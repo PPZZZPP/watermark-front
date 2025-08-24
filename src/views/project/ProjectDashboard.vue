@@ -155,10 +155,10 @@
         </a-form-item>
         <a-form-item name="originalVideo" label="原视频">
           <a-upload
-            :before-upload="file => { projectForm.originalVideo = { filename: file.name, size: file.size }; return false; }"
+            :before-upload="file => { projectForm.originalVideo = file; return false; }"
             :max-count="1"
             accept="video/*"
-            :file-list="projectForm.originalVideo ? [{ name: projectForm.originalVideo.filename, uid: '-1' }] : []"
+            :file-list="projectForm.originalVideo ? [{ name: projectForm.originalVideo.name, uid: '-1' }] : []"
             @remove="() => projectForm.originalVideo = null"
           >
             <a-button>选择原视频</a-button>
@@ -376,7 +376,7 @@ const handleProjectModalOk = async () => {
       await projectStore.createProject({
         name: projectForm.name,
         description: projectForm.description,
-        originalVideo: projectForm.originalVideo
+        file: projectForm.originalVideo
       });
       message.success('项目创建成功');
     }

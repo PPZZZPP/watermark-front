@@ -21,7 +21,8 @@ const removeToken = () => {
 
 // 创建axios实例
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '', // 从环境变量获取API基础URL，如果没有则使用相对路径
+  // 优先使用环境变量，其次通过 vite 代理直接转发到后端
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/',
   timeout: 15000, // 请求超时时间
 });
 

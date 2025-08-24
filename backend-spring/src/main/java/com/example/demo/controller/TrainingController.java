@@ -22,7 +22,7 @@ public class TrainingController {
     public ApiResponse<Map<String, Object>> start(@RequestBody TrainingTask req) {
         req.setStatus("processing");
         req.setStartTime(Instant.now());
-        var saved = repository.save(req);
+        com.example.demo.entity.TrainingTask saved = repository.save(req);
         Map<String, Object> data = new HashMap<>();
         data.put("task", saved);
         return ApiResponse.ok(data);
@@ -30,7 +30,7 @@ public class TrainingController {
 
     @GetMapping("/history")
     public ApiResponse<Map<String, Object>> history(@RequestParam(required = false) Long modelId) {
-        var list = repository.findByModelIdOrderByStart(modelId);
+        java.util.List<com.example.demo.entity.TrainingTask> list = repository.findByModelIdOrderByStart(modelId);
         Map<String, Object> data = new HashMap<>();
         data.put("list", list);
         data.put("total", list.size());

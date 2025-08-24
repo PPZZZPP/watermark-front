@@ -113,6 +113,35 @@ CREATE TABLE IF NOT EXISTS `video_tasks` (
   CONSTRAINT `fk_tasks_video` FOREIGN KEY (`video_id`) REFERENCES `videos`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `training_tasks` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `model_id` BIGINT,
+  `model_name` VARCHAR(200),
+  `status` VARCHAR(50),
+  `start_time` DATETIME(6),
+  `end_time` DATETIME(6),
+  `params_json` VARCHAR(2000),
+  `message` VARCHAR(1000),
+  PRIMARY KEY (`id`),
+  KEY `idx_train_model` (`model_id`),
+  KEY `idx_train_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `evaluation_records` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `model_id` BIGINT,
+  `test_dataset_name` VARCHAR(200),
+  `status` VARCHAR(50),
+  `psnr` DOUBLE,
+  `ssim` DOUBLE,
+  `start_time` DATETIME(6),
+  `end_time` DATETIME(6),
+  `message` VARCHAR(1000),
+  PRIMARY KEY (`id`),
+  KEY `idx_eval_model` (`model_id`),
+  KEY `idx_eval_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `system_models` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `code` VARCHAR(100) NOT NULL,
@@ -128,6 +157,9 @@ CREATE TABLE IF NOT EXISTS `system_models` (
   `extract_model_url` VARCHAR(500),
   `created_at` DATETIME(6),
   `updated_at` DATETIME(6),
+  `publisher` VARCHAR(100),
+  `applicable_scenarios` VARCHAR(500),
+  `published_at` DATETIME(6),
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_sysmodel_code` (`code`),
   KEY `idx_sysmodel_status` (`status`)

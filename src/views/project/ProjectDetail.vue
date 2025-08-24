@@ -71,7 +71,8 @@
                   <div class="video-meta">
                     <div class="meta-title" :title="currentProject.embeddedVideo.filename">{{ currentProject.embeddedVideo.filename }}</div>
                     <a-space wrap class="meta-tags">
-                      <a-tag color="geekblue">模型：{{ currentProject.embeddedVideo.model }}</a-tag>
+                      <a-tag color="geekblue">模型代码：{{ currentProject.embeddedVideo.model }}</a-tag>
+                      <a-tag v-if="currentProject.embeddedVideo.modelName" color="blue">模型名称：{{ currentProject.embeddedVideo.modelName }}</a-tag>
                       <a-tag v-if="currentProject.embeddedVideo.watermarkText" color="green">水印：{{ currentProject.embeddedVideo.watermarkText }}</a-tag>
                     </a-space>
                     <div class="video-actions">

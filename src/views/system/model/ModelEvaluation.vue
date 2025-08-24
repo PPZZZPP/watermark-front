@@ -11,7 +11,7 @@
             @change="handleModelChange"
           >
             <a-select-option v-for="model in availableModels" :key="model.id" :value="model.id">
-              {{ model.name }} ({{ model.type }})
+              {{ model.name }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -246,7 +246,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import { 
   ReloadOutlined, 
@@ -260,7 +260,7 @@ import {
   DownloadOutlined
 } from '@ant-design/icons-vue';
 import { useSystemStore } from '@/store/system';
-import { getEvaluationHistory, publishEvaluation, deleteEvaluationRecord } from '@/api/system';
+import { getEvaluationHistory, publishEvaluation, deleteEvaluationRecord, getModelList } from '@/api/system';
 
 // 系统存储
 const systemStore = useSystemStore();
@@ -276,12 +276,8 @@ const modelDetails = ref(null);
 // 当前活动标签页
 const activeTabKey = ref('frameComparison');
 
-// 可用模型列表
-const availableModels = ref([
-  { id: 1, name: 'WatermarkModel_v1', type: 'CNN' },
-  { id: 2, name: 'WatermarkModel_v2', type: 'Transformer' },
-  { id: 3, name: 'WatermarkModel_v3', type: 'Hybrid' },
-]);
+// 可用模型列表（从后端加载）
+const availableModels = ref([]);
 
 // 视频帧对比相关状态
 const videoProcessed = ref(false);
@@ -367,33 +363,55 @@ const handleModelChange = (value) => {
   testResults.value = null;
 };
 
-// 加载模型详情
+// 加载模型详情（使用已加载列表）
 const loadModelDetails = () => {
   if (!selectedModel.value) {
     message.warning('请先选择一个模型');
     return;
   }
-  
   loading.value = true;
-  
-  // 模拟加载模型详情
-  setTimeout(() => {
-    const model = availableModels.value.find(m => m.id === selectedModel.value);
-    
-    modelDetails.value = {
-      name: model.name,
-      type: model.type,
-      createTime: '2023-06-15 14:30:00',
-      dataset: 'VideoDataset_2023',
-      epochs: 50,
-      watermarkStrength: 7,
-    };
-    
+  const model = availableModels.value.find(m => m.id === selectedModel.value);
+  if (!model) {
     loading.value = false;
-    message.success('模型加载成功');
-    loadEvaluationHistory();
-  }, 1000);
+    message.error('未找到所选模型');
+    return;
+  }
+  modelDetails.value = {
+    name: model.name,
+    publisher: model.publisher,
+    publishedAt: model.publishedAt,
+    applicableScenarios: model.applicableScenarios,
+    description: model.description,
+  };
+  loading.value = false;
+  message.success('模型加载成功');
+  loadEvaluationHistory();
 };
+
+// 从后端加载可用模型（仅使用已发布/激活的）
+const loadAvailableModels = async () => {
+  try {
+    loading.value = true;
+    const res = await getModelList({ page: 1, pageSize: 1000, status: 'active' });
+    const list = (res && res.data && res.data.list) ? res.data.list : [];
+    availableModels.value = list.map(m => ({
+      id: m.id,
+      name: m.name || m.code,
+      publisher: m.publisher,
+      publishedAt: m.publishedAt,
+      applicableScenarios: m.applicableScenarios,
+      description: m.description,
+    }));
+  } catch (e) {
+    message.error('加载模型列表失败');
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadAvailableModels();
+});
 
 // 视频上传前检查
 const beforeVideoUpload = (file) => {

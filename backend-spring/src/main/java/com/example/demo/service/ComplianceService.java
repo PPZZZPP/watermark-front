@@ -33,16 +33,16 @@ public class ComplianceService {
                                             String videoHashAlgo,
                                             String videoHash) {
         String reportNo = generateReportNo(operation, projectId);
-        String signature = sign(Map.of(
-                "op", operation,
-                "uid", String.valueOf(userId),
-                "pid", String.valueOf(projectId),
-                "vid", String.valueOf(videoId),
-                "hash", videoHash == null ? "" : videoHash,
-                "model", modelCode == null ? "" : modelCode,
-                "ver", modelVersion == null ? "" : modelVersion,
-                "ts", String.valueOf(Instant.now().toEpochMilli())
-        ));
+        java.util.Map<String, String> payload = new java.util.HashMap<>();
+        payload.put("op", operation);
+        payload.put("uid", String.valueOf(userId));
+        payload.put("pid", String.valueOf(projectId));
+        payload.put("vid", String.valueOf(videoId));
+        payload.put("hash", videoHash == null ? "" : videoHash);
+        payload.put("model", modelCode == null ? "" : modelCode);
+        payload.put("ver", modelVersion == null ? "" : modelVersion);
+        payload.put("ts", String.valueOf(Instant.now().toEpochMilli()));
+        String signature = sign(payload);
         ComplianceRecord rec = ComplianceRecord.builder()
                 .operation(operation)
                 .userId(userId)

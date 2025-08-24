@@ -27,7 +27,7 @@ public class EvaluationController {
     public ApiResponse<Map<String, Object>> start(@RequestBody EvaluationRecord req) {
         req.setStatus("evaluating");
         req.setStartTime(Instant.now());
-        var saved = repository.save(req);
+        com.example.demo.entity.EvaluationRecord saved = repository.save(req);
         Map<String, Object> data = new HashMap<>();
         data.put("record", saved);
         return ApiResponse.ok(data);
@@ -37,7 +37,8 @@ public class EvaluationController {
     public ApiResponse<Map<String, Object>> publish(@PathVariable Long id,
                                                     @RequestParam(required = false) String description,
                                                     @RequestParam(required = false) String publisher) {
-        var rec = repository.findById(id).orElseThrow();
+        com.example.demo.entity.EvaluationRecord rec = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evaluation record not found"));
         rec.setStatus("published");
         rec.setEndTime(Instant.now());
         repository.save(rec);
@@ -47,10 +48,10 @@ public class EvaluationController {
             SystemModel m = systemModelRepository.findById(rec.getModelId()).orElse(null);
             if (m != null) {
                 m.setStatus(ModelStatus.active);
-                if (description != null && !description.isBlank()) {
+                if (description != null && description.trim().length() > 0) {
                     m.setDescription(description);
                 }
-                if (publisher != null && !publisher.isBlank()) {
+                if (publisher != null && publisher.trim().length() > 0) {
                     m.setPublisher(publisher);
                 }
                 m.setPublishedAt(Instant.now());
@@ -65,7 +66,8 @@ public class EvaluationController {
 
     @DeleteMapping("/record/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        var rec = repository.findById(id).orElseThrow();
+        com.example.demo.entity.EvaluationRecord rec = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evaluation record not found"));
         if ("published".equalsIgnoreCase(rec.getStatus())) {
             return ApiResponse.error(400, "已发布的评估记录不可删除");
         }
@@ -75,7 +77,7 @@ public class EvaluationController {
 
     @GetMapping("/history")
     public ApiResponse<Map<String, Object>> history(@RequestParam(required = false) Long modelId) {
-        var list = repository.findByModelIdOrderByStart(modelId);
+        java.util.List<com.example.demo.entity.EvaluationRecord> list = repository.findByModelIdOrderByStart(modelId);
         Map<String, Object> data = new HashMap<>();
         data.put("list", list);
         data.put("total", list.size());

@@ -33,8 +33,8 @@ public class ComplianceController {
                                                  @RequestParam(required = false) String operation,
                                                  @RequestParam(defaultValue = "1") int page,
                                                  @RequestParam(defaultValue = "10") int pageSize) {
-        var pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        var pg = repository.search(projectId, userId, operation, pageable);
+        org.springframework.data.domain.Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        org.springframework.data.domain.Page<com.example.demo.entity.ComplianceRecord> pg = repository.search(projectId, userId, operation, pageable);
         Map<String, Object> data = new HashMap<>();
         data.put("list", pg.getContent());
         data.put("page", page);
@@ -45,7 +45,8 @@ public class ComplianceController {
 
     @GetMapping("/report/{id}/export")
     public ResponseEntity<ByteArrayResource> exportReport(@PathVariable Long id) {
-        var rec = repository.findById(id).orElseThrow();
+        com.example.demo.entity.ComplianceRecord rec = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Compliance record not found"));
         String content = "报告编号: " + rec.getReportNo() + "\n" +
                 "生成时间: " + DateTimeFormatter.ISO_INSTANT.format(rec.getCreatedAt()) + "\n" +
                 "操作类型: " + rec.getOperation() + "\n" +
@@ -59,7 +60,7 @@ public class ComplianceController {
                 "签名: " + rec.getSignature() + "\n" +
                 "法律声明: 本报告用于证明操作发生与数据完整性，供合规审计使用。";
         byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-        var resource = new ByteArrayResource(bytes);
+        ByteArrayResource resource = new ByteArrayResource(bytes);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report-" + rec.getReportNo() + ".txt")
                 .contentType(MediaType.TEXT_PLAIN)

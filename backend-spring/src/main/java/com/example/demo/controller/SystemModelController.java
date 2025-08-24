@@ -27,13 +27,14 @@ public class SystemModelController {
                                                  @RequestParam(required = false) String keyword,
                                                  @RequestParam(required = false) String status,
                                                  @RequestParam(required = false) String scenario) {
-        var pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        org.springframework.data.domain.Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         if ("published".equalsIgnoreCase(status)) {
-            var all = repository.search(keyword, null, scenario, PageRequest.of(0, Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "createdAt"))).getContent();
-            var filtered = all.stream().filter(m -> m.getStatus() != ModelStatus.draft).toList();
+            java.util.List<com.example.demo.entity.SystemModel> all = repository.search(keyword, null, scenario, PageRequest.of(0, Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "createdAt"))).getContent();
+            java.util.List<com.example.demo.entity.SystemModel> filtered = new java.util.ArrayList<>();
+            for (com.example.demo.entity.SystemModel m : all) { if (m.getStatus() != ModelStatus.draft) filtered.add(m); }
             int from = Math.max(0, Math.min((page - 1) * pageSize, filtered.size()));
             int to = Math.max(0, Math.min(from + pageSize, filtered.size()));
-            var list = filtered.subList(from, to);
+            java.util.List<com.example.demo.entity.SystemModel> list = filtered.subList(from, to);
             Map<String, Object> data = new HashMap<>();
             data.put("list", list);
             data.put("page", page);
@@ -43,10 +44,10 @@ public class SystemModelController {
         }
 
         ModelStatus s = null;
-        if (status != null && !status.isBlank()) {
+        if (status != null && status.trim().length() > 0) {
             s = ModelStatus.valueOf(status);
         }
-        var pg = repository.search(keyword, s, scenario, pageable);
+        org.springframework.data.domain.Page<com.example.demo.entity.SystemModel> pg = repository.search(keyword, s, scenario, pageable);
         Map<String, Object> data = new HashMap<>();
         data.put("list", pg.getContent());
         data.put("page", page);
@@ -58,15 +59,15 @@ public class SystemModelController {
     @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         // 若存在发布状态的评估记录，删除后需要将其状态退回为已评估
-        var modelOpt = repository.findById(id);
+        java.util.Optional<com.example.demo.entity.SystemModel> modelOpt = repository.findById(id);
         if (modelOpt.isPresent()) {
-            var list = evaluationRecordRepository.findByModelIdOrderByStart(id);
-            list.forEach(rec -> {
+            java.util.List<com.example.demo.entity.EvaluationRecord> list = evaluationRecordRepository.findByModelIdOrderByStart(id);
+            for (com.example.demo.entity.EvaluationRecord rec : list) {
                 if ("published".equalsIgnoreCase(rec.getStatus())) {
                     rec.setStatus("evaluated");
                     evaluationRecordRepository.save(rec);
                 }
-            });
+            }
         }
         repository.deleteById(id);
         return ApiResponse.ok(null);

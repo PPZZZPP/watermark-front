@@ -22,6 +22,11 @@ export default defineConfig({
       '/system': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+      },
+      // 静态上传资源由后端暴露 /uploads/**，开发环境通过代理转发
+      '/uploads': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
       }
     },
   },
