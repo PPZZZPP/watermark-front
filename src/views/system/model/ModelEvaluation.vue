@@ -29,11 +29,10 @@
       <div v-if="modelDetails" class="model-details">
         <a-descriptions title="模型信息" bordered :column="3">
           <a-descriptions-item label="模型名称">{{ modelDetails.name }}</a-descriptions-item>
-          <a-descriptions-item label="模型类型">{{ modelDetails.type }}</a-descriptions-item>
-          <a-descriptions-item label="创建时间">{{ modelDetails.createTime }}</a-descriptions-item>
-          <a-descriptions-item label="训练数据集">{{ modelDetails.dataset }}</a-descriptions-item>
-          <a-descriptions-item label="训练轮数">{{ modelDetails.epochs }}</a-descriptions-item>
-          <a-descriptions-item label="水印强度">{{ modelDetails.watermarkStrength }}</a-descriptions-item>
+          <a-descriptions-item label="发布人">{{ modelDetails.publisher || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="发布时间">{{ modelDetails.publishedAt || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="适用场景">{{ modelDetails.applicableScenarios || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="描述" :span="3">{{ modelDetails.description || '-' }}</a-descriptions-item>
         </a-descriptions>
       </div>
       
@@ -56,106 +55,69 @@
                   </p>
                   <p class="ant-upload-text">点击或拖拽视频文件到此区域</p>
                   <p class="ant-upload-hint">
-                    支持上传MP4、AVI等常见视频格式，大小不超过50MB
+                    支持上传MP4、AVI等常见视频格式，大小不超过500MB
                   </p>
                 </a-upload-dragger>
               </a-col>
             </a-row>
             
-            <a-row :gutter="24" v-if="videoProcessed" class="comparison-result">
+            <a-row :gutter="16" v-if="videoProcessed" class="comparison-result">
+              <a-col :span="12">
+                <div class="video-container">
+                  <h4 class="video-title">原始视频</h4>
+                  <video
+                    ref="originalVideoRef"
+                    :src="originalVideoUrl"
+                    :controls="false"
+                    @loadedmetadata="onLoadedMetadata"
+                    @timeupdate="onTimeUpdate"
+                    style="width: 100%; max-height: 360px; background: #000"
+                  />
+                </div>
+              </a-col>
+              <a-col :span="12">
+                <div class="video-container">
+                  <h4 class="video-title">处理后视频</h4>
+                  <video
+                    ref="processedVideoRef"
+                    :src="processedVideoUrl"
+                    :controls="false"
+                    @loadedmetadata="onLoadedMetadata"
+                    @timeupdate="onTimeUpdate"
+                    style="width: 100%; max-height: 360px; background: #000"
+                  />
+                </div>
+              </a-col>
+            </a-row>
+
+            <!-- 统一外部控制条（避免回环抖动） -->
+            <a-row v-if="videoProcessed" style="margin-top: 12px" :gutter="12">
               <a-col :span="24">
-                <a-card title="水印嵌入效果对比" size="small">
-                  <a-row :gutter="16">
-                    <a-col :span="12">
-                      <div class="frame-container">
-                        <h4>原始视频帧</h4>
-                        <div class="frame-image">
-                          <img :src="originalFrame" alt="原始视频帧" />
-                          <div class="zoom-controls">
-                            <a-button type="primary" size="small" @click="toggleZoom('original')">
-                              <template #icon>
-                                <zoom-in-outlined v-if="!originalZoomed" />
-                                <zoom-out-outlined v-else />
-                              </template>
-                              {{ originalZoomed ? '缩小' : '放大' }}
-                            </a-button>
-                          </div>
-                        </div>
-                      </div>
-                    </a-col>
-                    <a-col :span="12">
-                      <div class="frame-container">
-                        <h4>水印嵌入后视频帧</h4>
-                        <div class="frame-image">
-                          <img :src="watermarkedFrame" alt="水印嵌入后视频帧" />
-                          <div class="zoom-controls">
-                            <a-button type="primary" size="small" @click="toggleZoom('watermarked')">
-                              <template #icon>
-                                <zoom-in-outlined v-if="!watermarkedZoomed" />
-                                <zoom-out-outlined v-else />
-                              </template>
-                              {{ watermarkedZoomed ? '缩小' : '放大' }}
-                            </a-button>
-                          </div>
-                        </div>
-                      </div>
-                    </a-col>
-                  </a-row>
-                  
-                  <a-row :gutter="16" style="margin-top: 16px">
-                    <a-col :span="24">
-                      <a-slider v-model:value="currentFrame" :min="1" :max="totalFrames" @change="changeFrame" />
-                      <div class="frame-controls">
-                        <span>第 {{ currentFrame }} 帧 / 共 {{ totalFrames }} 帧</span>
-                        <div>
-                          <a-button-group>
-                            <a-button @click="prevFrame" :disabled="currentFrame <= 1">
-                              <template #icon><left-outlined /></template>
-                              上一帧
-                            </a-button>
-                            <a-button @click="nextFrame" :disabled="currentFrame >= totalFrames">
-                              下一帧
-                              <template #icon><right-outlined /></template>
-                            </a-button>
-                          </a-button-group>
-                        </div>
-                      </div>
-                    </a-col>
-                  </a-row>
-                  
-                  <a-row :gutter="16" style="margin-top: 16px">
-                    <a-col :span="24">
-                      <a-card title="水印嵌入分析" size="small">
-                        <a-row :gutter="16">
-                          <a-col :span="8">
-                            <a-statistic title="PSNR" :value="framePSNR" :precision="2" suffix="dB" />
-                          </a-col>
-                          <a-col :span="8">
-                            <a-statistic title="SSIM" :value="frameSSIM" :precision="4" />
-                          </a-col>
-                          <a-col :span="8">
-                            <a-statistic title="视觉差异" :value="visualDifference" :precision="2" suffix="%" />
-                          </a-col>
-                        </a-row>
-                        
-                        <a-divider />
-                        
-                        <p>
-                          <strong>分析结果：</strong> 
-                          该模型在视频帧中嵌入水印的视觉质量{{ qualityLevel }}。
-                          PSNR值{{ psnrAnalysis }}，SSIM值{{ ssimAnalysis }}，
-                          表明水印嵌入对原始视频的视觉影响{{ impactLevel }}。
-                        </p>
-                      </a-card>
-                    </a-col>
-                  </a-row>
-                </a-card>
+                <div class="control-bar">
+                  <a-space :size="12" wrap>
+                    <a-button type="primary" @click="playBoth">播放</a-button>
+                    <a-button @click="pauseBoth">暂停</a-button>
+                    <a-button @click="rewindBoth">回到开头</a-button>
+                    <span class="label">进度</span>
+                    <div class="progress-wrap">
+                      <a-slider :min="0" :max="Math.max(1, duration)" v-model:value="position" @change="onSeekSlider" :tooltipOpen="true" />
+                    </div>
+                    <span class="time-text">{{ formatTime(position) }} / {{ formatTime(duration) }}</span>
+                    <span class="label">倍速</span>
+                    <a-select style="width: 90px" v-model:value="rate" @change="onRateChange">
+                      <a-select-option :value="0.5">0.5x</a-select-option>
+                      <a-select-option :value="1">1x</a-select-option>
+                      <a-select-option :value="1.5">1.5x</a-select-option>
+                      <a-select-option :value="2">2x</a-select-option>
+                    </a-select>
+                  </a-space>
+                </div>
               </a-col>
             </a-row>
           </div>
         </a-tab-pane>
         
-        <!-- 鲁棒性测试 -->
+        <!-- 历史评估记录与指标表格（示例占位，可对接后端） -->
         <a-tab-pane key="robustnessTest" tab="鲁棒性测试">
           <div class="robustness-test">
             <a-row :gutter="24">
@@ -250,6 +212,34 @@
             </a-row>
           </div>
         </a-tab-pane>
+
+        <!-- 历史评估记录 -->
+        <a-tab-pane key="history" tab="历史评估记录">
+          <a-card size="small" :bordered="false">
+            <a-table
+              :columns="historyColumns"
+              :data-source="evaluationHistory"
+              :pagination="{ pageSize: 5 }"
+              size="small"
+              row-key="id"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'status'">
+                  <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
+                </template>
+                <template v-if="column.key === 'action'">
+                  <a-space>
+                    <a-button type="link" size="small" @click="openFrameCompare(record)">视频帧对比</a-button>
+                    <a-button type="link" size="small" @click="publishModelFromEval(record)" :disabled="record.status !== 'evaluated'">发布模型</a-button>
+                    <a-popconfirm title="确定删除该评估记录？" ok-text="确定" cancel-text="取消" @confirm="deleteEvaluation(record)">
+                      <a-button type="link" danger size="small" :disabled="record.status === 'published'">删除</a-button>
+                    </a-popconfirm>
+                  </a-space>
+                </template>
+              </template>
+            </a-table>
+          </a-card>
+        </a-tab-pane>
       </a-tabs>
     </a-card>
   </div>
@@ -270,6 +260,7 @@ import {
   DownloadOutlined
 } from '@ant-design/icons-vue';
 import { useSystemStore } from '@/store/system';
+import { getEvaluationHistory, publishEvaluation, deleteEvaluationRecord } from '@/api/system';
 
 // 系统存储
 const systemStore = useSystemStore();
@@ -294,20 +285,30 @@ const availableModels = ref([
 
 // 视频帧对比相关状态
 const videoProcessed = ref(false);
-const originalFrame = ref('');
-const watermarkedFrame = ref('');
-const originalZoomed = ref(false);
-const watermarkedZoomed = ref(false);
-const currentFrame = ref(1);
-const totalFrames = ref(100);
-const framePSNR = ref(35.8);
-const frameSSIM = ref(0.9842);
-const visualDifference = ref(1.58);
+const originalVideoUrl = ref('');
+const processedVideoUrl = ref('');
+const originalVideoRef = ref(null);
+const processedVideoRef = ref(null);
+const duration = ref(0);
+const position = ref(0);
+const rate = ref(1);
+const isPlaying = ref(false);
+let rafId = 0;
 
 // 鲁棒性测试相关状态
 const testsetUploaded = ref(false);
 const testsetInfo = ref(null);
 const testResults = ref(null);
+// 历史评估记录
+const historyColumns = [
+  { title: '模型名称', dataIndex: 'modelName', key: 'modelName' },
+  { title: '测试数据集名称', dataIndex: 'testDatasetName', key: 'testDatasetName' },
+  { title: '评估状态', dataIndex: 'status', key: 'status' },
+  { title: 'PSNR', dataIndex: 'psnr', key: 'psnr' },
+  { title: 'SSIM', dataIndex: 'ssim', key: 'ssim' },
+  { title: '操作', key: 'action', width: 260 },
+];
+const evaluationHistory = ref([]);
 
 // 攻击类型列
 const attackColumns = [
@@ -390,6 +391,7 @@ const loadModelDetails = () => {
     
     loading.value = false;
     message.success('模型加载成功');
+    loadEvaluationHistory();
   }, 1000);
 };
 
@@ -400,9 +402,9 @@ const beforeVideoUpload = (file) => {
     message.error('只能上传视频文件!');
   }
   
-  const isLt50M = file.size / 1024 / 1024 < 50;
+  const isLt50M = file.size / 1024 / 1024 < 500;
   if (!isLt50M) {
-    message.error('视频大小不能超过50MB!');
+    message.error('视频大小不能超过500MB!');
   }
   
   return isVideo && isLt50M;
@@ -415,18 +417,10 @@ const uploadVideo = ({ file, onSuccess }) => {
   // 模拟视频处理
   setTimeout(() => {
     message.destroy();
-    
-    // 设置模拟数据
-    originalFrame.value = 'https://via.placeholder.com/640x360.png?text=Original+Frame';
-    watermarkedFrame.value = 'https://via.placeholder.com/640x360.png?text=Watermarked+Frame';
-    currentFrame.value = 1;
-    totalFrames.value = 100;
-    
-    // 随机生成PSNR和SSIM值
-    framePSNR.value = (Math.random() * 10 + 30).toFixed(2);
-    frameSSIM.value = (Math.random() * 0.1 + 0.9).toFixed(4);
-    visualDifference.value = (Math.random() * 5).toFixed(2);
-    
+    // 这里模拟：同一文件作为原视频，同时生成“处理后”视频链接（真实场景应调用后端处理生成 URL）
+    const url = URL.createObjectURL(file);
+    originalVideoUrl.value = url;
+    processedVideoUrl.value = url; // 占位：可替换为后端返回的视频地址
     videoProcessed.value = true;
     onSuccess();
     
@@ -434,41 +428,78 @@ const uploadVideo = ({ file, onSuccess }) => {
   }, 2000);
 };
 
-// 切换放大状态
-const toggleZoom = (type) => {
-  if (type === 'original') {
-    originalZoomed.value = !originalZoomed.value;
-  } else {
-    watermarkedZoomed.value = !watermarkedZoomed.value;
-  }
+// 统一外部控制实现（单处控制，避免回环）
+const ensureReady = () => originalVideoRef.value && processedVideoRef.value;
+const syncPositionFromPrimary = () => {
+  if (!ensureReady()) return;
+  const t = originalVideoRef.value.currentTime;
+  processedVideoRef.value.currentTime = t;
+  position.value = t;
+};
+const updateDuration = () => {
+  if (!ensureReady()) return;
+  duration.value = Math.max(originalVideoRef.value.duration || 0, processedVideoRef.value.duration || 0) || 0;
+};
+const onLoadedMetadata = () => {
+  updateDuration();
+  position.value = 0;
 };
 
-// 切换到上一帧
-const prevFrame = () => {
-  if (currentFrame.value > 1) {
-    currentFrame.value--;
-    changeFrame(currentFrame.value);
-  }
+const playBoth = async () => {
+  if (!ensureReady()) return;
+  syncPositionFromPrimary();
+  originalVideoRef.value.playbackRate = rate.value;
+  processedVideoRef.value.playbackRate = rate.value;
+  await Promise.allSettled([originalVideoRef.value.play(), processedVideoRef.value.play()]);
+  isPlaying.value = true;
+  startTicker();
+};
+const pauseBoth = () => {
+  if (!ensureReady()) return;
+  originalVideoRef.value.pause();
+  processedVideoRef.value.pause();
+  isPlaying.value = false;
+  if (rafId) cancelAnimationFrame(rafId);
+};
+const rewindBoth = () => {
+  if (!ensureReady()) return;
+  originalVideoRef.value.currentTime = 0;
+  processedVideoRef.value.currentTime = 0;
+  position.value = 0;
+};
+const onSeekSlider = (val) => {
+  if (!ensureReady()) return;
+  originalVideoRef.value.currentTime = Number(val || 0);
+  processedVideoRef.value.currentTime = Number(val || 0);
+};
+const onRateChange = (val) => {
+  if (!ensureReady()) return;
+  originalVideoRef.value.playbackRate = Number(val);
+  processedVideoRef.value.playbackRate = Number(val);
+};
+const formatTime = (s) => {
+  const pad = (n) => String(Math.floor(n)).padStart(2, '0');
+  const ss = Math.floor(s || 0);
+  return `${pad(ss / 60)}:${pad(ss % 60)}`;
 };
 
-// 切换到下一帧
-const nextFrame = () => {
-  if (currentFrame.value < totalFrames.value) {
-    currentFrame.value++;
-    changeFrame(currentFrame.value);
-  }
+// 播放中实时更新进度条
+const onTimeUpdate = () => {
+  if (!ensureReady()) return;
+  // 取左侧为主的当前时间
+  position.value = originalVideoRef.value.currentTime;
 };
 
-// 改变当前帧
-const changeFrame = (frameNumber) => {
-  // 模拟帧变化
-  originalFrame.value = `https://via.placeholder.com/640x360.png?text=Original+Frame+${frameNumber}`;
-  watermarkedFrame.value = `https://via.placeholder.com/640x360.png?text=Watermarked+Frame+${frameNumber}`;
-  
-  // 随机生成新的PSNR和SSIM值
-  framePSNR.value = (Math.random() * 10 + 30).toFixed(2);
-  frameSSIM.value = (Math.random() * 0.1 + 0.9).toFixed(4);
-  visualDifference.value = (Math.random() * 5).toFixed(2);
+// 更小间隔的进度同步（requestAnimationFrame）
+const startTicker = () => {
+  if (!ensureReady()) return;
+  if (rafId) cancelAnimationFrame(rafId);
+  const tick = () => {
+    if (!isPlaying.value) return;
+    position.value = originalVideoRef.value.currentTime;
+    rafId = requestAnimationFrame(tick);
+  };
+  rafId = requestAnimationFrame(tick);
 };
 
 // 测试集上传前检查
@@ -596,6 +627,33 @@ const formatFileSize = (bytes) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+// 状态与操作
+const statusText = (s) => ({ evaluating: '评估中', failed: '评估失败', evaluated: '已评估', published: '已发布' }[s] || s);
+const statusColor = (s) => ({ evaluating: 'processing', failed: 'error', evaluated: 'blue', published: 'success' }[s] || 'default');
+
+const loadEvaluationHistory = async () => {
+  try {
+    const res = await getEvaluationHistory({ modelId: selectedModel.value });
+    evaluationHistory.value = res?.data?.list || [];
+  } catch {}
+};
+
+const openFrameCompare = (record) => {
+  message.info('打开视频帧对比弹窗（占位）');
+};
+
+const publishModelFromEval = async (record) => {
+  await publishEvaluation(record.id, '评估合格，发布模型');
+  message.success('模型已发布');
+  loadEvaluationHistory();
+};
+
+const deleteEvaluation = async (record) => {
+  await deleteEvaluationRecord(record.id);
+  message.success('已删除评估记录');
+  loadEvaluationHistory();
+};
 </script>
 
 <style lang="less" scoped>
@@ -650,5 +708,43 @@ const formatFileSize = (bytes) => {
   justify-content: space-between;
   align-items: center;
   margin-top: 8px;
+}
+
+/* 新增：统一控制条与进度条样式 */
+.control-bar {
+  padding: 12px 16px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+}
+
+.control-bar .label {
+  color: #666;
+}
+
+.progress-wrap {
+  width: 420px;
+  max-width: 60vw;
+}
+
+.time-text {
+  min-width: 100px;
+  text-align: right;
+  color: #333;
+}
+
+.video-title {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+@media (max-width: 992px) {
+  .progress-wrap {
+    width: 260px;
+    max-width: 80vw;
+  }
+  .time-text {
+    min-width: 72px;
+  }
 }
 </style> 

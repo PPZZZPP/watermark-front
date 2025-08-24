@@ -14,14 +14,14 @@
     <!-- 模块选择卡片 -->
     <div class="module-tabs">
       <a-tabs v-model:activeKey="activeTabKey" @change="handleTabChange">
+        <a-tab-pane key="publish" tab="模型发布">
+          <ModelPublish />
+        </a-tab-pane>
         <a-tab-pane key="training" tab="模型训练">
           <ModelTraining />
         </a-tab-pane>
         <a-tab-pane key="evaluation" tab="模型评估">
           <ModelEvaluation />
-        </a-tab-pane>
-        <a-tab-pane key="publish" tab="模型发布">
-          <ModelPublish />
         </a-tab-pane>
       </a-tabs>
     </div>

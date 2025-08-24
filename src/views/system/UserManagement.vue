@@ -27,9 +27,6 @@
         <a-form-item label="用户名">
           <a-input v-model:value="searchForm.username" placeholder="请输入用户名" />
         </a-form-item>
-        <a-form-item label="邮箱">
-          <a-input v-model:value="searchForm.email" placeholder="请输入邮箱" />
-        </a-form-item>
         <a-form-item label="角色">
           <a-select v-model:value="searchForm.role" placeholder="请选择角色" allow-clear style="width: 160px">
             <a-select-option v-for="role in roleList" :key="role.code" :value="role.code">{{ role.name }}</a-select-option>
@@ -127,37 +124,25 @@
         
         <a-row :gutter="24">
           <a-col :span="12">
-            <a-form-item name="nickname" label="昵称">
-              <a-input v-model:value="userForm.nickname" placeholder="请输入昵称" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
             <a-form-item name="email" label="邮箱">
               <a-input v-model:value="userForm.email" placeholder="请输入邮箱" />
             </a-form-item>
           </a-col>
-        </a-row>
-        
-        <a-row :gutter="24">
           <a-col :span="12">
             <a-form-item name="phone" label="手机号">
               <a-input v-model:value="userForm.phone" placeholder="请输入手机号" />
             </a-form-item>
           </a-col>
+        </a-row>
+        
+        <a-row :gutter="24">
+
           <a-col :span="12">
             <a-form-item name="gender" label="性别">
               <a-select v-model:value="userForm.gender" placeholder="请选择性别">
                 <a-select-option value="male">男</a-select-option>
                 <a-select-option value="female">女</a-select-option>
               </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        
-        <a-row :gutter="24">
-          <a-col :span="12">
-            <a-form-item name="department" label="部门">
-              <a-input v-model:value="userForm.department" placeholder="请输入部门" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -168,6 +153,7 @@
             </a-form-item>
           </a-col>
         </a-row>
+        
       </a-form>
     </a-modal>
 
@@ -191,11 +177,7 @@
               <a-input v-model:value="userForm.username" disabled />
             </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item name="nickname" label="昵称">
-              <a-input v-model:value="userForm.nickname" placeholder="请输入昵称" />
-            </a-form-item>
-          </a-col>
+
         </a-row>
         
         <a-row :gutter="24">
@@ -221,14 +203,6 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item name="department" label="部门">
-              <a-input v-model:value="userForm.department" placeholder="请输入部门" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        
-        <a-row :gutter="24">
-          <a-col :span="12">
             <a-form-item name="role" label="角色">
               <a-select v-model:value="userForm.role" placeholder="请选择角色">
                 <a-select-option v-for="role in roleList" :key="role.code" :value="role.code">{{ role.name }}</a-select-option>
@@ -236,6 +210,7 @@
             </a-form-item>
           </a-col>
         </a-row>
+        
       </a-form>
     </a-modal>
 
@@ -349,11 +324,6 @@ const columns = [
     dataIndex: 'username',
     key: 'username',
     sorter: true,
-  },
-  {
-    title: '昵称',
-    dataIndex: 'nickname',
-    key: 'nickname',
   },
   {
     title: '邮箱',

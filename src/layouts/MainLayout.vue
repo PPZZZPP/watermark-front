@@ -117,9 +117,9 @@
                 <a-menu-item key="profile" @click="() => router.push('/dashboard/profile')">
                   <user-outlined /> 个人信息
                 </a-menu-item>
-                <a-menu-item key="settings" @click="() => router.push('/dashboard/settings')">
+                <!-- <a-menu-item key="settings" @click="() => router.push('/dashboard/settings')">
                   <setting-outlined /> 账号设置
-                </a-menu-item>
+                </a-menu-item> -->
                 <a-menu-divider />
                 <a-menu-item key="logout" @click="handleLogout">
                   <logout-outlined /> 退出登录

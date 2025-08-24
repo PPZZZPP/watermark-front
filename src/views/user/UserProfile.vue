@@ -35,15 +35,11 @@
           <div class="profile-stats">
             <div class="profile-stat-item">
               <p class="stat-number">12</p>
-              <p class="stat-title">处理视频</p>
-            </div>
-            <div class="profile-stat-item">
-              <p class="stat-number">5</p>
-              <p class="stat-title">模板</p>
+              <p class="stat-title">项目总数</p>
             </div>
             <div class="profile-stat-item">
               <p class="stat-number">26</p>
-              <p class="stat-title">任务</p>
+              <p class="stat-title">任务总数</p>
             </div>
           </div>
         </div>
@@ -72,11 +68,6 @@
                     </a-form-item>
                   </a-col>
                   
-                  <a-col :span="12">
-                    <a-form-item name="nickname" label="昵称">
-                      <a-input v-model:value="userForm.nickname" placeholder="请输入昵称" />
-                    </a-form-item>
-                  </a-col>
                 </a-row>
                 
                 <a-row :gutter="24">
@@ -94,11 +85,7 @@
                 </a-row>
                 
                 <a-row :gutter="24">
-                  <a-col :span="24">
-                    <a-form-item name="bio" label="个人简介">
-                      <a-textarea v-model:value="userForm.bio" placeholder="请输入个人简介" :rows="4" />
-                    </a-form-item>
-                  </a-col>
+
                 </a-row>
                 
                 <a-form-item>

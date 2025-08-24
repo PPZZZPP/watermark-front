@@ -150,7 +150,7 @@ export function stopModelTraining(trainingId) {
 // 获取训练历史记录
 export function getTrainingHistory(params) {
   return request({
-    url: '/system/model/training-history',
+    url: '/system/training/history',
     method: 'get',
     params
   });
@@ -196,3 +196,44 @@ export function getTestReport(testId) {
     method: 'get'
   });
 } 
+
+// 新训练接口
+export function startTrainingTask(data) {
+  return request({
+    url: '/system/training/start',
+    method: 'post',
+    data
+  });
+}
+
+// 评估接口
+export function startEvaluation(data) {
+  return request({
+    url: '/system/evaluation/start',
+    method: 'post',
+    data
+  });
+}
+
+export function publishEvaluation(id, description) {
+  return request({
+    url: `/system/evaluation/publish/${id}`,
+    method: 'post',
+    params: { description }
+  });
+}
+
+export function deleteEvaluationRecord(id) {
+  return request({
+    url: `/system/evaluation/record/${id}`,
+    method: 'delete'
+  });
+}
+
+export function getEvaluationHistory(params) {
+  return request({
+    url: '/system/evaluation/history',
+    method: 'get',
+    params
+  });
+}

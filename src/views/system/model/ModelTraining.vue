@@ -9,7 +9,7 @@
       </template>
       
       <a-row :gutter="24">
-        <!-- 左侧：训练数据集上传 -->
+        <!-- 左侧：训练数据集上传 + 验证数据集上传 -->
         <a-col :span="12">
           <a-card title="训练数据集" size="small" :bordered="false" class="inner-card">
             <div class="upload-container">
@@ -40,35 +40,41 @@
               </a-descriptions>
             </div>
           </a-card>
+
+          <a-card title="验证数据集" size="small" :bordered="false" class="inner-card">
+            <a-upload-dragger
+              name="val_dataset"
+              :multiple="false"
+              :before-upload="beforeValUpload"
+              :customRequest="uploadValDataset"
+              :file-list="valFileList"
+              @change="handleValChange"
+            >
+              <p class="ant-upload-drag-icon">
+                <inbox-outlined />
+              </p>
+              <p class="ant-upload-text">点击或拖拽验证数据集（ZIP）上传</p>
+              <p class="ant-upload-hint">大小不超过 1GB</p>
+            </a-upload-dragger>
+          </a-card>
         </a-col>
         
-        <!-- 右侧：训练参数配置 -->
+        <!-- 右侧：训练参数配置 + 验证数据集上传 -->
         <a-col :span="12">
           <a-card title="训练参数配置" size="small" :bordered="false" class="inner-card">
             <a-form :model="trainingParams" layout="vertical">
               <a-form-item label="模型名称" name="modelName">
                 <a-input v-model:value="trainingParams.modelName" placeholder="请输入模型名称" />
               </a-form-item>
-              
-              <a-form-item label="模型类型" name="modelType">
-                <a-select v-model:value="trainingParams.modelType" placeholder="请选择模型类型">
-                  <a-select-option value="cnn">CNN</a-select-option>
-                  <a-select-option value="transformer">Transformer</a-select-option>
-                  <a-select-option value="hybrid">混合模型</a-select-option>
+
+              <a-form-item label="适用场景" name="scenario">
+                <a-select v-model:value="trainingParams.scenario" placeholder="请选择适用场景">
+                  <a-select-option value="movie">电影</a-select-option>
+                  <a-select-option value="tv">电视节目</a-select-option>
+                  <a-select-option value="live">直播</a-select-option>
+                  <a-select-option value="game">游戏</a-select-option>
+                  <a-select-option value="education">教育视频</a-select-option>
                 </a-select>
-              </a-form-item>
-              
-              <a-form-item label="水印强度" name="watermarkStrength">
-                <a-slider
-                  v-model:value="trainingParams.watermarkStrength"
-                  :min="1"
-                  :max="10"
-                  :marks="{
-                    1: '弱',
-                    5: '中',
-                    10: '强'
-                  }"
-                />
               </a-form-item>
               
               <a-form-item label="训练轮数" name="epochs">
@@ -171,8 +177,8 @@
             
             <template v-if="column.key === 'action'">
               <a-space>
-                <a-button type="link" size="small" @click="viewTrainingDetail(record)" v-if="record.status === 'completed'">
-                  查看详情
+                <a-button type="link" size="small" @click="goToEvaluation(record)" v-if="record.status === 'completed'">
+                  前往评估
                 </a-button>
                 <a-button type="link" size="small" @click="continueTraining(record)" v-if="record.status === 'stopped'">
                   继续训练
@@ -222,8 +228,7 @@ const trainingLogs = ref([]);
 // 训练参数
 const trainingParams = reactive({
   modelName: '',
-  modelType: 'cnn',
-  watermarkStrength: 5,
+  scenario: undefined,
   epochs: 20,
   batchSize: 32,
   learningRate: 0.001,
@@ -235,29 +240,29 @@ const trainingParams = reactive({
 // 历史训练记录列
 const historyColumns = [
   {
+    title: '任务ID',
+    dataIndex: 'id',
+    key: 'id',
+  },
+  {
     title: '模型名称',
     dataIndex: 'modelName',
     key: 'modelName',
   },
   {
-    title: '模型类型',
-    dataIndex: 'modelType',
-    key: 'modelType',
+    title: '训练状态',
+    dataIndex: 'status',
+    key: 'status',
   },
   {
-    title: '训练开始时间',
+    title: '开始时间',
     dataIndex: 'startTime',
     key: 'startTime',
   },
   {
-    title: '训练时长',
-    dataIndex: 'duration',
-    key: 'duration',
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    key: 'status',
+    title: '结束时间',
+    dataIndex: 'endTime',
+    key: 'endTime',
   },
   {
     title: '操作',
@@ -267,32 +272,7 @@ const historyColumns = [
 ];
 
 // 历史训练记录
-const trainingHistory = ref([
-  {
-    id: 1,
-    modelName: 'WatermarkModel_v1',
-    modelType: 'cnn',
-    startTime: '2023-06-01 10:00:00',
-    duration: '2小时30分钟',
-    status: 'completed',
-  },
-  {
-    id: 2,
-    modelName: 'WatermarkModel_v2',
-    modelType: 'transformer',
-    startTime: '2023-06-05 14:30:00',
-    duration: '3小时15分钟',
-    status: 'completed',
-  },
-  {
-    id: 3,
-    modelName: 'WatermarkModel_v3',
-    modelType: 'hybrid',
-    startTime: '2023-06-10 09:45:00',
-    duration: '1小时45分钟',
-    status: 'stopped',
-  },
-]);
+const trainingHistory = ref([]);
 
 // 计算是否可以开始训练
 const canStartTraining = computed(() => {
@@ -391,7 +371,7 @@ const handleDatasetChange = (info) => {
 };
 
 // 开始训练
-const startTraining = () => {
+const startTraining = async () => {
   if (!currentDataset.value) {
     message.warning('请先上传训练数据集');
     return;
@@ -401,20 +381,20 @@ const startTraining = () => {
     message.warning('请输入模型名称');
     return;
   }
-  
-  trainingLoading.value = true;
-  isTraining.value = true;
-  trainingProgress.value = 0;
-  currentEpoch.value = 0;
-  trainingLogs.value = [];
-  
-  // 添加初始日志
-  addTrainingLog('开始训练模型: ' + trainingParams.modelName);
-  addTrainingLog('模型类型: ' + trainingParams.modelType);
-  addTrainingLog('数据集: ' + currentDataset.value.name);
-  
-  // 模拟训练进度
-  simulateTraining();
+  try {
+    trainingLoading.value = true;
+    isTraining.value = true;
+    trainingProgress.value = 0;
+    currentEpoch.value = 0;
+    trainingLogs.value = [];
+    addTrainingLog('开始训练模型: ' + trainingParams.modelName);
+    addTrainingLog('数据集: ' + currentDataset.value.name);
+    // 调后端创建训练任务
+    // await startTrainingTask({ modelName: trainingParams.modelName, paramsJson: JSON.stringify(trainingParams) });
+    simulateTraining();
+  } finally {
+    // do nothing here
+  }
 };
 
 // 停止训练
@@ -503,7 +483,6 @@ const viewTrainingDetail = (record) => {
 // 继续训练
 const continueTraining = (record) => {
   trainingParams.modelName = record.modelName;
-  trainingParams.modelType = record.modelType;
   message.info(`继续训练模型: ${record.modelName}`);
 };
 
@@ -511,6 +490,30 @@ const continueTraining = (record) => {
 const deleteTrainingRecord = (record) => {
   trainingHistory.value = trainingHistory.value.filter(item => item.id !== record.id);
   message.success(`已删除训练记录: ${record.modelName}`);
+};
+
+const goToEvaluation = (record) => {
+  message.success('跳转到模型评估页');
+  // 这里可结合路由跳转到评估 tab
+};
+
+// 验证数据集上传相关
+const valFileList = ref([]);
+const beforeValUpload = (file) => {
+  const isZip = file.type === 'application/zip' || file.type === 'application/x-zip-compressed' || file.name.endsWith('.zip');
+  if (!isZip) message.error('只能上传ZIP格式的验证集文件!');
+  const isLt1G = file.size / 1024 / 1024 / 1024 < 1;
+  if (!isLt1G) message.error('验证集大小不能超过1GB!');
+  return isZip && isLt1G;
+};
+const uploadValDataset = ({ file, onSuccess }) => {
+  setTimeout(() => {
+    onSuccess();
+    message.success(`${file.name} 上传成功`);
+  }, 1200);
+};
+const handleValChange = (info) => {
+  valFileList.value = [...info.fileList].slice(-1);
 };
 </script>
 

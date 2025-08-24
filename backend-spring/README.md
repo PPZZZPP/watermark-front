@@ -1,86 +1,62 @@
 Watermark 后端（Spring Boot）
 
-本项目使用 Spring Boot 3.3，默认端口 8080，默认使用内存数据库 H2（零配置即可运行）。
+本项目使用 Spring Boot 3.3，默认端口 8080，默认使用 MySQL（已移除 H2）。
 
 环境要求
-- JDK 24（已安装即可。注意：本项目的编译目标是 21，用 JDK 24 运行没有问题）
+- JDK 21（推荐，LTS）。如使用 JDK 24，某些注解处理器可能不兼容，建议保持 21。
 - Maven 3.9+
-- 可选：MySQL 8.x（如需持久化数据）
+- MySQL 8.x（启动前需可用）
 
-关键配置
-- 端口：server.port=8080（在 src/main/resources/application.yml）
-- Profile：默认 h2，可切换为 mysql
-- H2 控制台：/h2-console
+关键配置（src/main/resources/application.yml）
+- 端口：server.port=8080
+- 数据源：spring.datasource.url/username/password（默认 `root/root`）
+- JPA：spring.jpa.hibernate.ddl-auto=none（表结构由 SQL 脚本管理）
+- SQL 初始化：spring.sql.init.mode=always（自动执行 schema.sql、data.sql）
 
-快速启动（H2 模式）
-在项目根目录执行（Windows PowerShell）：
+数据库初始化脚本（自动执行）
+- `schema.sql`：建库建表（包含 `CREATE DATABASE IF NOT EXISTS watermark;`）。
+- `data.sql`：基础与示例数据（幂等插入）。
+说明：若当前 MySQL 账户无“建库”权限，可手动先创建数据库，然后删掉 `schema.sql` 里的 `CREATE DATABASE` 语句或保留也可（无权限会报错）。
 
+快速启动（Windows PowerShell）
 ```powershell
 cd backend-spring
 mvn -v
+mvn clean package -DskipTests
 mvn spring-boot:run
+# 或
+java -jar target/watermark-backend-0.0.1-SNAPSHOT.jar
 ```
 
-启动成功后，后端地址：http://localhost:8080
+启动成功后：后端地址 `http://localhost:8080`
 
-常用联调接口示例：
-- GET http://localhost:8080/system/model/list?status=published
+常用联调接口示例
+- GET http://localhost:8080/system/model/list
 - GET http://localhost:8080/api/project/list
 
-切换到 MySQL（可选）
-1) 创建数据库：CREATE DATABASE watermark DEFAULT CHARACTER SET utf8mb4;
-2) 启动时指定 profile：
-
-```powershell
-mvn spring-boot:run -Dspring-boot.run.profiles=mysql
-# 或打包后
-mvn clean package -DskipTests
-java -jar target/watermark-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=mysql
-```
-
-默认 MySQL 连接在 application.yml 中，可按需改为你的用户名密码：
-- url: jdbc:mysql://localhost:3306/watermark?...
-- username: root
-- password: root
-
 前端如何访问后端
-前端 Vite 已配置代理（vite.config.js）：
-- /api → http://localhost:8080
-- /system → http://localhost:8080
-
+- Vite 代理（vite.config.js）：
+  - /api → http://localhost:8080
+  - /system → http://localhost:8080
 步骤：
-1) 启动后端（见上方）
-2) 另开终端启动前端：
-
 ```powershell
+# 另开终端
 cd ..\
 npm install
 npm run dev
 ```
+打开 `http://localhost:3000`，前端访问 /api/**、/system/** 会自动代理到后端 8080。
+提示：如启用了前端 MSW Mock（src/main.js），为避免冲突可临时关闭。
 
-3) 打开 http://localhost:3000，前端访问 /api/**、/system/** 会自动代理到后端 8080。
-
-提示：如果你之前启用了前端的 MSW Mock（src/main.js），为避免与真实后端冲突，可暂时注释 setupMockService() 的调用，或改成：
-
-```js
-if (false && import.meta.env.DEV) { /* 原来的 mock 启动代码 */ }
-```
-
-JDK 24 相关说明
-- 当前 pom.xml 中 `<java.version>21</java.version>`：建议保持 21（LTS，兼容性好）。用 JDK 24 运行没问题。
-- 如坚持编译成 24：将 pom.xml 的 `<java.version>` 改为 `24` 即可（若依赖未适配可能报错，不建议初学者修改）。
-
-目录结构说明（简要）
+目录结构（简要）
 backend-spring/
-- pom.xml                      Maven 配置（依赖、插件、Java 版本）
+- pom.xml                      Maven 配置
 - README.md                    本说明
-- src/main/java/...            代码目录（见 java/README.md 详解）
-- src/main/resources/          配置目录（application.yml 等）
-- target/                      构建输出（打包后生成）
+- src/main/java/...            代码目录
+- src/main/resources/          应用配置与 SQL（application.yml、schema.sql、data.sql）
+- target/                      构建输出
 
 常见问题
-- 端口被占用：修改 application.yml 的 server.port 或关闭占用该端口的程序
-- 连接 MySQL 失败：检查数据库是否创建、账号密码是否正确、端口是否开放
-- 前端仍然是 Mock 数据：请暂时禁用 src/main.js 的 MSW 启动逻辑
-
-
+- 无法连接 MySQL：检查服务是否运行、账号密码与端口、是否允许本机访问。
+- 建库权限不足：手动在 MySQL 中执行 `CREATE DATABASE watermark DEFAULT CHARACTER SET utf8mb4;`，或为账户授予权限。
+- 端口被占用：调整 application.yml 中 `server.port`。

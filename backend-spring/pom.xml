@@ -19,6 +19,7 @@
          如果你坚持用 24，也可以改成 24，但需确保所有依赖都已适配。
          使用 JDK 24 运行 JDK 21 编译的程序没有问题（向下目标）。 -->
     <java.version>21</java.version>
+    <lombok.version>1.18.32</lombok.version>
   </properties>
 
   <dependencies>
@@ -39,11 +40,7 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>runtime</scope>
-    </dependency>
+    <!-- 移除 H2，默认仅使用 MySQL -->
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
@@ -67,6 +64,8 @@
         <version>3.11.0</version>
         <configuration>
           <release>${java.version}</release>
+          <fork>true</fork>
+          <executable>C:\Program Files\Java\jdk-21\bin\javac</executable>
         </configuration>
       </plugin>
     </plugins>
