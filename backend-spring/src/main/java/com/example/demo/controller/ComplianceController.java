@@ -31,16 +31,57 @@ public class ComplianceController {
     public ApiResponse<Map<String, Object>> list(@RequestParam(required = false) Long projectId,
                                                  @RequestParam(required = false) Long userId,
                                                  @RequestParam(required = false) String operation,
+                                                 @RequestParam(required = false) String filename,
+                                                 @RequestParam(required = false) String status,
                                                  @RequestParam(defaultValue = "1") int page,
                                                  @RequestParam(defaultValue = "10") int pageSize) {
         org.springframework.data.domain.Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        org.springframework.data.domain.Page<com.example.demo.entity.ComplianceRecord> pg = repository.search(projectId, userId, operation, pageable);
+        org.springframework.data.domain.Page<com.example.demo.entity.ComplianceRecord> pg = repository.search(projectId, userId, operation, filename, status, pageable);
         Map<String, Object> data = new HashMap<>();
         data.put("list", pg.getContent());
         data.put("page", page);
         data.put("pageSize", pageSize);
         data.put("total", pg.getTotalElements());
         return ApiResponse.ok(data);
+    }
+
+    @PostMapping("/report/{id}/generate")
+    public ApiResponse<Map<String, Object>> generateReport(@PathVariable Long id) {
+        com.example.demo.entity.ComplianceRecord rec = repository.findById(id).orElse(null);
+        if (rec == null) return ApiResponse.error(404, "记录不存在");
+        try {
+            String base = System.getProperty("user.dir") + java.io.File.separator + "backend-spring" + java.io.File.separator + "uploads" + java.io.File.separator + "reports";
+            java.io.File dir = new java.io.File(base);
+            if (!dir.exists()) dir.mkdirs();
+            String name = (rec.getReportNo() != null && rec.getReportNo().trim().length() > 0) ? rec.getReportNo() : ("R-" + rec.getId());
+            java.io.File f = new java.io.File(dir, name + ".txt");
+            String content = "REPORT:" + name + "\nMODEL=" + rec.getModelCode() + "\nWM=" + rec.getWatermarkText();
+            java.nio.file.Files.write(f.toPath(), content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            rec.setReportPath("/uploads/reports/" + f.getName());
+            repository.save(rec);
+            Map<String, Object> data = new HashMap<String, Object>();
+            data.put("reportPath", rec.getReportPath());
+            return ApiResponse.ok(data);
+        } catch (Exception e) {
+            return ApiResponse.error(500, "生成失败: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/report/{id}/verify")
+    public ApiResponse<Map<String, Object>> verifyReport(@PathVariable Long id) {
+        com.example.demo.entity.ComplianceRecord rec = repository.findById(id).orElse(null);
+        if (rec == null) return ApiResponse.error(404, "记录不存在");
+        // 简化校验：若有 reportPath 则视为有效
+        boolean ok = rec.getReportPath() != null && rec.getReportPath().trim().length() > 0;
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("valid", ok);
+        return ApiResponse.ok(data);
+    }
+
+    @DeleteMapping("/record/{id}")
+    public ApiResponse<Void> deleteRecord(@PathVariable Long id) {
+        repository.deleteById(id);
+        return ApiResponse.ok(null);
     }
 
     @GetMapping("/report/{id}/export")

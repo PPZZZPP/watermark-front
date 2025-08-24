@@ -6,6 +6,7 @@ import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 // 导入全局样式
 import './style.css'
+import './styles/variables.less'
 
 // 创建应用实例
 const app = createApp(App)

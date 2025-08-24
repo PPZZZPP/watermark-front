@@ -1,11 +1,12 @@
 <template>
-  <a-layout class="layout-container">
+  <a-layout class="layout-container" ref="rootEl">
     <!-- 侧边栏 -->
     <a-layout-sider
       v-model:collapsed="collapsed"
       :trigger="null"
       collapsible
       class="layout-sider"
+      :width="220"
     >
       <div class="logo">
         <h2 v-if="!collapsed">视频水印系统</h2>
@@ -17,6 +18,7 @@
         v-model:selectedKeys="selectedKeys"
         theme="dark"
         mode="inline"
+        :inline-collapsed="collapsed"
       >
         <a-sub-menu key="project-management">
           <template #icon><home-outlined /></template>
@@ -144,10 +146,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/store/user';
 import Breadcrumb from '@/components/common/Breadcrumb.vue';
+import { gsap } from '@/plugins/gsap';
 import {
   UserOutlined,
   HomeOutlined,
@@ -226,7 +229,42 @@ onMounted(async () => {
   } catch (error) {
     console.error('获取用户信息失败', error);
   }
+  // 菜单与头部入场
+  nextTick(() => {
+    gsap.from('.layout-sider .logo h2', { y: 8, opacity: 0, duration: 0.4, ease: 'power2.out' });
+    gsap.from('.layout-sider :deep(.ant-menu-item), .layout-sider :deep(.ant-menu-submenu-title)', {
+      y: 8,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power2.out',
+      stagger: 0.03
+    });
+    gsap.from('.layout-header', { y: -8, opacity: 0, duration: 0.45, ease: 'power2.out' });
+    // 顶部图标悬停微动效
+    const icons = document.querySelectorAll('.header-icon');
+    icons.forEach((el) => {
+      el.addEventListener('mouseenter', () => gsap.to(el, { y: -2, duration: 0.18, ease: 'power2.out' }));
+      el.addEventListener('mouseleave', () => gsap.to(el, { y: 0, duration: 0.18, ease: 'power2.out' }));
+    });
+  });
 });
+
+// 悬停微动效（颜色交给 CSS，位移动画用 GSAP）
+const rootEl = ref(null);
+let ctx;
+onMounted(() => {
+  nextTick(() => {
+    ctx = gsap.context(() => {
+      const hoverLift = (el) => {
+        el.addEventListener('mouseenter', () => gsap.to(el, { x: 4, duration: 0.18, ease: 'power2.out' }));
+        el.addEventListener('mouseleave', () => gsap.to(el, { x: 0, duration: 0.18, ease: 'power2.out' }));
+      };
+      document.querySelectorAll('.layout-sider :is(.ant-menu-item, .ant-menu-submenu-title)').forEach(hoverLift);
+    }, rootEl);
+  });
+});
+
+onBeforeUnmount(() => { if (ctx) ctx.revert(); });
 
 // 处理退出登录
 const handleLogout = () => {
@@ -250,6 +288,8 @@ const handleLogout = () => {
   overflow-y: auto; /* 侧边栏内容过多时可滚动 */
   box-shadow: 2px 0 6px rgba(0, 21, 41, 0.15);
   z-index: 10;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   
   .logo {
     height: 64px;
@@ -326,7 +366,7 @@ const handleLogout = () => {
         font-size: 16px;
         padding: 0 12px;
         cursor: pointer;
-        transition: color 0.3s;
+        transition: color 0.6s, transform 0.6s ease-out;
         color: rgba(0, 0, 0, 0.65);
         
         &:hover {
@@ -366,6 +406,20 @@ const handleLogout = () => {
   background: transparent;
   min-height: 280px;
   position: relative;
+}
+
+// 侧边菜单选中与悬停玻璃渐变
+:deep(.ant-menu-dark.ant-menu-root) {
+  background: transparent;
+}
+:deep(.ant-menu-dark .ant-menu-item-selected) {
+  background: linear-gradient(90deg, rgba(22,119,255,0.22), rgba(64,150,255,0.12));
+  border-radius: 10px;
+}
+:deep(.ant-menu-dark .ant-menu-item:hover),
+:deep(.ant-menu-dark .ant-menu-submenu-title:hover) {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
 }
 
 

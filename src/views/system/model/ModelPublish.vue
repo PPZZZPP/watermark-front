@@ -1,6 +1,6 @@
 <template>
   <div class="model-publish-container">
-    <a-card title="模型发布" :bordered="false">
+    <a-card title="模型发布" :bordered="false" class="glass-card">
       <!-- 顶部筛选区域 -->
       <a-form layout="inline" style="margin-bottom: 16px">
         <a-form-item label="模型名称">
@@ -74,6 +74,11 @@ const publishedColumns = [
     title: '模型名称',
     dataIndex: 'name',
     key: 'name',
+  },
+  {
+    title: '模型代码',
+    dataIndex: 'code',
+    key: 'code',
   },
   {
     title: '发布人',
@@ -178,7 +183,8 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.inner-card {
-  margin-bottom: 24px;
+.model-publish-container {
+  .glass-card { background: rgba(255,255,255,0.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 }
-</style> 
+.inner-card { margin-bottom: 24px; }
+</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="model-evaluation-container">
+  <div class="model-evaluation-container" ref="rootEl">
     <a-card title="模型评估" :bordered="false">
       <!-- 模型选择 -->
       <a-form layout="inline" class="model-select-form">
@@ -246,7 +246,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { message } from 'ant-design-vue';
 import { 
   ReloadOutlined, 
@@ -261,6 +261,7 @@ import {
 } from '@ant-design/icons-vue';
 import { useSystemStore } from '@/store/system';
 import { getEvaluationHistory, publishEvaluation, deleteEvaluationRecord, getModelList } from '@/api/system';
+import { gsap, ScrollTrigger } from '@/plugins/gsap';
 
 // 系统存储
 const systemStore = useSystemStore();
@@ -290,6 +291,10 @@ const position = ref(0);
 const rate = ref(1);
 const isPlaying = ref(false);
 let rafId = 0;
+
+// GSAP 动画上下文
+const rootEl = ref(null);
+let gsapCtx;
 
 // 鲁棒性测试相关状态
 const testsetUploaded = ref(false);
@@ -411,7 +416,38 @@ const loadAvailableModels = async () => {
 
 onMounted(() => {
   loadAvailableModels();
+  nextTick(() => {
+    gsapCtx = gsap.context(() => {
+      gsap.from('.model-select-form', { y: 12, opacity: 0, duration: 0.5, ease: 'power2.out' });
+      gsap.from('.model-details', {
+        y: 16,
+        opacity: 0,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: '.model-details', start: 'top 85%' }
+      });
+      gsap.from('.evaluation-tabs .ant-tabs-tab', {
+        y: 8,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.05,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: '.evaluation-tabs', start: 'top 85%' }
+      });
+      gsap.from('.comparison-result .video-container', {
+        y: 18,
+        opacity: 0,
+        duration: 0.55,
+        stagger: 0.08,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: '.comparison-result', start: 'top 85%' }
+      });
+      gsap.from('.control-bar', { y: 10, opacity: 0, duration: 0.45, ease: 'power2.out' });
+    }, rootEl);
+  });
 });
+
+onBeforeUnmount(() => { if (gsapCtx) gsapCtx.revert(); });
 
 // 视频上传前检查
 const beforeVideoUpload = (file) => {

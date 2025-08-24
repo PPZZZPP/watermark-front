@@ -1,5 +1,5 @@
 <template>
-  <div class="page-header">
+  <div class="page-header" ref="rootEl">
     <!-- 标题和操作区域 -->
     <div class="page-header-content">
       <!-- 左侧标题区域 -->
@@ -36,6 +36,8 @@
 
 <script setup>
 import Breadcrumb from './Breadcrumb.vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { gsap } from '@/plugins/gsap';
 
 defineProps({
   title: {
@@ -47,6 +49,19 @@ defineProps({
     default: ''
   }
 });
+
+// 轻量标题入场
+const rootEl = ref(null);
+let ctx;
+onMounted(() => {
+  nextTick(() => {
+    ctx = gsap.context(() => {
+      gsap.from('.page-header-heading', { y: 12, opacity: 0, duration: 0.5, ease: 'power2.out' });
+      gsap.from('.page-header-extra', { y: 12, opacity: 0, duration: 0.5, ease: 'power2.out', delay: 0.05 });
+    }, rootEl);
+  });
+});
+onBeforeUnmount(() => { if (ctx) ctx.revert(); });
 </script>
 
 <style lang="less" scoped>

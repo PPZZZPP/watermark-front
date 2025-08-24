@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "axe:scan": "node scripts/axe-scan.cjs"
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",
@@ -17,6 +18,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
+    "axe-core": "^4.9.1",
+    "puppeteer": "^22.15.0",
     "less": "^4.3.0",
     "less-loader": "^12.3.0",
     "msw": "^2.8.4",

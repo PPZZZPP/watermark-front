@@ -186,6 +186,15 @@ CREATE TABLE IF NOT EXISTS `compliance_records` (
   KEY `idx_comp_op` (`operation`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 增量字段（若不存在则新增），用于合规审计页面展示
+ALTER TABLE `compliance_records`
+  ADD COLUMN IF NOT EXISTS `video_filename` VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS `upload_time` DATETIME(6) NULL,
+  ADD COLUMN IF NOT EXISTS `watermark_text` VARCHAR(2000) NULL,
+  ADD COLUMN IF NOT EXISTS `compare_result` VARCHAR(100) NULL,
+  ADD COLUMN IF NOT EXISTS `extract_status` VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS `report_path` VARCHAR(500) NULL;
+
 CREATE TABLE IF NOT EXISTS `datasets` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(200) NOT NULL,

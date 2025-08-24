@@ -54,6 +54,24 @@ public class ComplianceRecord {
     private String reportNo;
 
     private Instant createdAt;
+
+    // 补充字段：前端展示用
+    @Column(length = 255)
+    private String videoFilename;  // 屏摄视频文件名
+
+    private Instant uploadTime;    // 上传时间
+
+    @Column(length = 2000)
+    private String watermarkText;  // 提取出的水印文本
+
+    @Column(length = 100)
+    private String compareResult;  // 比对结果（match/mismatch/unknown）
+
+    @Column(length = 50)
+    private String extractStatus;  // 提取状态（pending/processing/completed/failed）
+
+    @Column(length = 500)
+    private String reportPath;     // 报告文件相对路径
 }
 
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="model-training-container">
+  <div class="model-training-container" ref="rootEl">
     <a-card title="模型训练" :bordered="false">
       <template #extra>
         <a-button type="primary" @click="startTraining" :loading="trainingLoading" :disabled="!canStartTraining">
@@ -196,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
 import { message } from 'ant-design-vue';
 import { 
   PlayCircleOutlined, 
@@ -204,9 +204,14 @@ import {
   StopOutlined 
 } from '@ant-design/icons-vue';
 import { useSystemStore } from '@/store/system';
+import { gsap, ScrollTrigger } from '@/plugins/gsap';
 
 // 系统存储
 const systemStore = useSystemStore();
+
+// GSAP 动画上下文
+const rootEl = ref(null);
+let gsapCtx;
 
 // 数据集文件列表
 const datasetFileList = ref([]);
@@ -515,6 +520,39 @@ const uploadValDataset = ({ file, onSuccess }) => {
 const handleValChange = (info) => {
   valFileList.value = [...info.fileList].slice(-1);
 };
+
+// 入场与滚动 Reveal 动画
+onMounted(() => {
+  gsapCtx = gsap.context(() => {
+    gsap.from('.inner-card', {
+      y: 20,
+      opacity: 0,
+      duration: 0.6,
+      ease: 'power2.out',
+      stagger: 0.08,
+      scrollTrigger: {
+        trigger: rootEl.value,
+        start: 'top 85%'
+      }
+    });
+
+    gsap.from('.ant-form-item', {
+      y: 12,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power2.out',
+      stagger: 0.04,
+      scrollTrigger: {
+        trigger: '.inner-card',
+        start: 'top 80%'
+      }
+    });
+  }, rootEl);
+});
+
+onBeforeUnmount(() => {
+  if (gsapCtx) gsapCtx.revert();
+});
 </script>
 
 <style lang="less" scoped>

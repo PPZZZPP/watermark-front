@@ -69,13 +69,14 @@
           <a-row :gutter="[16, 16]">
             <a-col :xs="24" :sm="12" :md="8" :lg="6" v-for="project in projects" :key="project.id">
               <a-card 
-                class="project-card" 
+                class="project-card glass-card" 
                 hoverable 
                 @click="viewProject(project.id)"
               >
                 <template #cover>
                   <div class="project-cover">
                     <img :src="project.coverUrl || '/placeholder-video.png'" alt="项目封面" />
+                    <div class="cover-gradient"></div>
                     <div class="project-status">
                       <a-tag :color="getStatusColor(project.status)">{{ getStatusText(project.status) }}</a-tag>
                     </div>
@@ -527,10 +528,11 @@ onUnmounted(() => {
     .project-card {
       height: 100%;
       transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.35);
       
       &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
       }
       
       .project-cover {
@@ -542,6 +544,10 @@ onUnmounted(() => {
           width: 100%;
           height: 100%;
           object-fit: cover;
+        }
+        .cover-gradient {
+          position: absolute; inset: 0;
+          background: linear-gradient(180deg, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.25) 100%);
         }
         
         .project-status {
@@ -585,7 +591,7 @@ onUnmounted(() => {
       }
     }
   }
-  
+  .glass-card { background: rgba(255,255,255,0.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .pagination-container {
     margin-top: 24px;
     text-align: right;
